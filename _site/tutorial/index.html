@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="http://localhost:3000/tutorial/">
+    <link rel="canonical" href="http://localhost/tutorial/">
     <title>Getrafty.org</title>
 </head>
 
@@ -53,25 +53,25 @@
 <main>
     <a href="/index">cd ~/</a>
     <p>Quick coding exercise to get handy with the codebase, toolchains, etc.</p>
-<h2>#1. Getting The Source Code</h2>
-<p>Clone the <a href="https://github.com/getrafty-org/getrafty">git repository</a>:</p>
-<pre><code class="language-shell">git clone git@github.com:getrafty-org/getrafty.git
+<h2>Getting The Source Code</h2>
+<p>Make a private fork of the <a href="https://github.com/getrafty-org/getrafty">repository</a> and clone it:</p>
+<pre><code class="language-shell">git clone git@github.com:&lt;username&gt;/getrafty.git
 cd getrafty/tasks/tutorial
 </code></pre>
-<h2>#2. Setting Up Dev Environment</h2>
+<h2>Setting Up Dev Environment</h2>
 <p>Launch dev container with configured development environment</p>
 <pre><code class="language-shell">./tasklet.py boot 
 </code></pre>
 <p>The container is now running on port <code>3333</code> and accessible under <code>ubuntu</code> user. To continue in terminal login via <code>ssh ubuntu@localhost -p 3333</code> or simply <code>./tasklet.py attach</code>. It's recommended to configure an IDE of your choice.</p>
-<h2>#3. Coding Solution</h2>
-<p>Your goal is to complete the method <code>FluxCapacitor::computeTimeBreakBarrierSpeed</code> in <code>flux_capacitor.cpp</code>.</p>
+<h2>🧠 Task</h2>
+<p>Your goal is to complete the method <code>FluxCapacitor::computeTimeBreakBarrierSpeed</code> in <a href="https://github.com/getrafty-org/getrafty/blob/main/tasks/tutorial/flux_capacitor.cpp"><code>flux_capacitor.cpp</code></a>.</p>
 <pre><code class="language-c++">// In flux_capacitor.cpp:
 Speed FluxCapacitor::computeTimeBreakBarrierSpeed() {
     ...
 };
 </code></pre>
-<p>The method should return a minimum speed (measured in miles per hour) for a Delorean <a href="https://en.wikipedia.org/wiki/DeLorean_time_machine#Operation">to be able to travel in time</a>.</p>
-<h2>#4. Verifying Solution</h2>
+<p>The method should return a minimum speed (measured in miles per hour) for a DeLorean vehicle <a href="https://en.wikipedia.org/wiki/DeLorean_time_machine#Operation">to be able to travel in time</a>.</p>
+<h2>Verification</h2>
 <p>Ensure your code passes clang-tidy lints. Every task comes with tests, and you should be able to run it via <a href="https://cmake.org/cmake/help/latest/guide/tutorial/A%20Basic%20Starting%20Point.html">CMake</a>.</p>
 <p>Note: Eventually this step should be automated and task solution could be checked via tasklet.</p>
 <p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/getrafty-org/getrafty/issues">GitHub</a>.</p>

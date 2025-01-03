@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="http://localhost:3000/getting-started/">
+    <link rel="canonical" href="http://localhost/basic-file-server/">
     <title>Getrafty.org</title>
 </head>
 
@@ -52,38 +52,15 @@
 
 <main>
     <a href="/index">cd ~/</a>
-    <h1>Getting Started</h1>
-<blockquote>
-<p>/**
-<em>The only officially supported way to run this class labs it though Docker. Although, you can set up the dev environment on you host machine, this approach hasn't been tested.</em>
-**/</p>
-</blockquote>
-<h3>Get the repository</h3>
-<p>Clone the git repository which contains the contents of the class.</p>
-<pre><code class="language-bash">cd ~/my-projects
-git clone https://github.com/sidosera/getrafty.git &amp;&amp; cd getrafty
-</code></pre>
-<p>This class repository is shipped with an assistant tool called Clippy. Clippy is a simple shell script that helps to automate many frequent activities such as testing solutions or connecting to the dev VM.
-Check if Clippy works as expected.</p>
-<pre><code class="language-bash">chmod +x clippy.sh # to make things easier, we can make this file executable.
-
-./clippy.sh
-</code></pre>
-<p>It should print the regular command help message.</p>
-<h3>Login to dev container</h3>
-<p>The repository includes dev container packing necessary dependencies and provides a straightforward way to get started.</p>
-<p>This command will run a new instance of dev container.</p>
-<pre><code>./clippy.sh boostrap --build
-</code></pre>
-<p>If everything is good, the container should be running with an open ssh port <code>3333</code> and user <code>ubuntu</code>. Connect using SSH or Clippy:</p>
-<pre><code># Connect via SSH
-ssh ubuntu@localhost -p 3333
-</code></pre>
-<pre><code># Connect via Clippy
-./clippy.sh attach
-</code></pre>
-<h3>Jump to the fist exercise</h3>
-<p>You're ready for the first exercise: <a href="/#navigation-">tutorial</a> ;)</p>
+    <h1>🚧 Basic File Server</h1>
+<p>Until now, we’ve focused on foundational primitives required to build any backend system. While these concepts are essential, they alone don’t provide a comprehensive understanding of how complex distributed backend systems function.
+To bridge this gap, we’ll explore the construction of a toy distributed filesystem as a unifying example.
+To begin the conversation, let's consider how the high level interface of this system may look like.</p>
+<p>There are multiple options here - it could expose a web interface (e.g. Dropbox), be natively integrated to OS or both. This workbench is primarily focused on infrastructure systems, and thus it will focus on integrated approach.</p>
+<p>From the OS standpoint, filesystem is an abstraction providing read and write operations on top of storage hardware implementing/utilizing <a href="https://en.wikipedia.org/wiki/Virtual_file_system">Virtual Filesystem (VFS)</a> interface. VFSes are adopted by popular operating systems like Linux, is particularly advantageous for our goal. Remarkably, it enables us to design our own filesystem without modifying the kernel, thanks to tools like <a href="https://en.wikipedia.org/wiki/Filesystem_in_Userspace">FUSE</a>.</p>
+<p><img src="/static/img/fuse.png" alt="Scenes from distributed systems"></p>
+<p>Exciting, isn’t it? Our toy filesystem will leverage this approach, abstracting away the complexities of storage—whether it resides locally or is distributed across dozens, hundreds, or even thousands of nodes.</p>
+<h2>Node</h2>
 
 </main>
 

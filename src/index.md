@@ -15,8 +15,7 @@ Please keep your forked repository private and refrain from sharing your solutio
 Get ready 🍿
 
 ![Scenes from distributed systems](/static/img/scenes-from-distributed-systems.webp)
-
-*~ [scenes from distributed systems, X (Twitter)](https://x.com/b0rk/status/1056560207562711041)*
+*[Scenes from distributed systems, X (Twitter)](https://x.com/b0rk/status/1056560207562711041)*
 
 ## Catch
 
@@ -24,16 +23,14 @@ Get ready 🍿
 
 ## Navigation 🗺️
 
-- [How to work with this repository](getting-started)
-  - [Tutorial](tutorial)
+- [How to work with this repository: Tutorial](tutorial)
 - Index
-  - [Remote Procedure Calls @I. Thread pool](/thread-pool)
-  - [Remote Procedure Calls @II. IO](/rpc-io)
-  - 🚧 [Remote Procedure Calls @III. Calling functions](#)
-  - 🚧 [Filesystem @I.Accessing remotely over RPC](#)
-  - 🚧 [Filesystem @II. Surviving node failures](#)
+  - [Basic primitives, Queues, Thread pools](thread-pool)
+  - [Remote Procedure Calls](rpc-io)
+  - 🚧 [Basic File Server](basic-file-server)
+  - 🚧 [Fault Tolerant File Server](#)
 
-- Misc.
+- Instructions
   - [Install Docker](etc/use-docker)
   - [SSH to dev container](etc/connect-over-ssh)
   - [How to use this repository with VSCode](etc/use-vscode)
