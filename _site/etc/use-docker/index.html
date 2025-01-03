@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="{{ url |> url(true) }}">
+    <link rel="canonical" href="http://localhost:3000/etc/use-docker/">
     <title>Getrafty.org</title>
 </head>
 
@@ -52,7 +52,20 @@
 
 <main>
     <a href="/index">cd ~/</a>
-    {{ content }}
+    <h1>Install Docker</h1>
+<h3>Linux</h3>
+<pre><code class="language-bash">sudo apt install -y docker docker-compose bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+</code></pre>
+<p>Once installed, reload the current session (or simply reboot a machine).</p>
+<h3>OS X</h3>
+<p>Download, install and launch <a href="https://docs.docker.com/desktop/install/mac-install/">Docker Desktop</a>. Make sure the toolbar now has a Docker icon.</p>
+<h3>Check Docker has been installed</h3>
+<p>This should output a hello message from Docker</p>
+<pre><code class="language-bash">docker run hello-world
+</code></pre>
+
 </main>
 
 <!-- Place scripts at the end for better performance -->

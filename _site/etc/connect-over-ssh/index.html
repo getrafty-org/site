@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="{{ url |> url(true) }}">
+    <link rel="canonical" href="http://localhost:3000/etc/connect-over-ssh/">
     <title>Getrafty.org</title>
 </head>
 
@@ -52,7 +52,11 @@
 
 <main>
     <a href="/index">cd ~/</a>
-    {{ content }}
+    <h1>SSH to dev container</h1>
+<p>The container exposes an ssh port <code>:3333</code> so you can always connect under <code>ubuntu</code> user and use your preferred tool.</p>
+<pre><code class="language-shell">$ ssh ubuntu@localhost -p 3333
+</code></pre>
+
 </main>
 
 <!-- Place scripts at the end for better performance -->

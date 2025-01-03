@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="{{ url |> url(true) }}">
+    <link rel="canonical" href="http://localhost:3000/etc/use-vscode/">
     <title>Getrafty.org</title>
 </head>
 
@@ -52,7 +52,28 @@
 
 <main>
     <a href="/index">cd ~/</a>
-    {{ content }}
+    <h1>Using Visual Studio Code</h1>
+<p>The container exposes an ssh port <code>:3333</code> so you can always connect under <code>ubuntu</code> user and use your preferred tool. This is a short how-to on setting up environment with VSCode.</p>
+<h3>Attach to dev VM</h3>
+<pre><code class="language-shell">$ clippy attach
+</code></pre>
+<h3>Download VSCode server on the devvm</h3>
+<p>Install the VS Code CLI on the dev VM:</p>
+<pre><code class="language-shell">$ curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&amp;os=cli-alpine-x64' --output vscode_cli.tar.gz &amp;\ 
+     tar -xf vscode_cli.tar.gz
+</code></pre>
+<p>~Tip: it can be inconvenient to repeat this step multiple times. To streamline the process, you can add this command to your <a href="https://github.com/sidosera/getrafty/blob/main/.bashrc">.bashrc</a> file, which will ensure the VSCode server is downloaded upon your first login.</p>
+<h3>Start the tunnel</h3>
+<p>VSCode support tunneling right into container. Run the following command and follow command prompts:</p>
+<pre><code class="language-shell">$ ./code tunnel
+# there will be several steps like gh auth, etc.
+Open this link in your browser https://vscode.dev/tunnel/0000
+</code></pre>
+<h3>Connect to remote VSCode instance</h3>
+<p>The command below outputs the link to the newly created VSCode session like <code>https://vscode.dev/tunnel/0000</code> which let you open IDE in the browser.</p>
+<h3>Recommended extensions</h3>
+<p>llvm-vs-code-extensions.vscode-clangd</p>
+
 </main>
 
 <!-- Place scripts at the end for better performance -->

@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/icomoon.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="{{ url |> url(true) }}">
+    <link rel="canonical" href="http://localhost:3000/rpc-io/">
     <title>Getrafty.org</title>
 </head>
 
@@ -52,7 +52,45 @@
 
 <main>
     <a href="/index">cd ~/</a>
-    {{ content }}
+    <h1>Remote Procedure Calls | IO</h1>
+<p>We begin exploration of the world of distributes systems from the concept of RPC. RPC is a design paradigm that allow two entities to communicate over a communication channel in a general request-response mechanism. RPC creates an abstraction connecting caller and callee hiding the complexity of faulty network under the hood. There are plenty of RPC implementations such as <a href="https://grpc.io/">gRPC</a>, <a href="https://thrift.apache.org/">Apache Thrift</a> or <a href="https://capnproto.org/">Cap'n Proto</a>.</p>
+<p>🍿 <a href="http://dist-prog-book.com/chapter/1/rpc.html">RPC is Not Dead: Rise, Fall and the Rise of Remote Procedure Calls</a></p>
+<p>Internally RPC deals a lot with IO, reading from and writing data back to <a href="https://en.wikipedia.org/wiki/Berkeley_sockets">sockets</a>. In this task you will implement this fundamental part of any RPC framework.</p>
+<p>Socket is a programming interface operating system exposes to interacting with the network card. The concept of sockets exists in any widely used operating system, e.g. <a href="https://en.wikipedia.org/wiki/POSIX">POSIX</a> specifies <a href="https://en.wikipedia.org/wiki/Berkeley_sockets">Berkeley sockets</a> interface.</p>
+<p>In Linux (using Berkeley sockets), sockets can work in two modes: blocking and non-blocking. In blocking mode, a thread waits until data is available, which can lead to wasted CPU time. Instead, we will use non-blocking mode, where threads don’t have to sit idle while waiting for data, it can do something different before  operating system notifies it. This approach helps make better use of threads and system resources. We refer to this method as asynchronous I/O.</p>
+<p>The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like <a href="https://man7.org/linux/man-pages/man7/epoll.7.html"><code>epoll</code></a> or higher level mechanisms like event loop, e.g. <a href="https://github.com/libuv/libuv"><code>libuv</code></a>.</p>
+<h3>Interface</h3>
+<p>For this task, we won’t be creating a fully functional event loop. Instead, we’ll concentrate on a specific aspect of its functionality: the notification mechanism. You're given a <code>EventWatcher</code> class implementing this mechanism. It allows to <code>watch</code> on a file descriptor and call a <code>IWatchCallback</code> callback whenever file descriptor becomes ready for reading or writing.</p>
+<pre><code class="language-c++">class EventWatcher {
+public:
+    void watch(int fd, WatchFlag flag, IWatchCallback *ch);
+    void unwatch(int fd);
+    void unwatchAll();
+    static EventWatcher &amp;getInstance();
+private:
+    // Loop for waiting for fb to become ready for reading or writing 
+    // and scheduling callbacks 
+    void waitLoop();
+};
+</code></pre>
+<p>The callback is called once fd (e.g. socket) becomes ready.</p>
+<pre><code class="language-c++">class IWatchCallback {
+public:
+    virtual void onReadReady(int fd) = 0;
+    virtual void onWriteReady(int fd) = 0;
+};
+</code></pre>
+<p>Your task is to implement <code>waitLoop</code> method of the <code>EventWatcher</code> class using <a href="https://man7.org/linux/man-pages/man2/epoll_wait.2.html#top_of_page"><code>epoll_wait</code></a>.</p>
+<h3>Where to schedule callbacks?</h3>
+<p>If a user-defined callback is scheduled on the same thread as the <code>waitLoop</code>, it can interfere with the loop logic impacting the overall performance. To address this, the <code>EventWatcher</code> allows specifying a thread pool in its constructor, which is used to run the main loop. This thread pool can also be utilized to execute user-provided callbacks.</p>
+<h3>Cancellation mechanism</h3>
+<p>It's possible the <code>epoll_wait</code> will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched 'immediately' rather than after the current loop cycle.  Consider using <a href="https://cr.yp.to/docs/selfpipe.html">self pipe trick</a> or timeout for epoll wait. <em>Which one is better and why?</em></p>
+<h3>Synchronisation</h3>
+<p>The epoll can detect fd being read / written in the callback as ready. This can result in data race unless proper synchronization is used inside user-defined callback structure. Think about ways to guarantee the callback are mutually exclusive for the same fd without requiring user-defined callback to synchronise access to fd.</p>
+<h3>Testing</h3>
+<p>Tests are located in <code>event_watcher_test.cpp</code>.</p>
+<p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/sidosera/getrafty/issues">GitHub</a>.</p>
+
 </main>
 
 <!-- Place scripts at the end for better performance -->
