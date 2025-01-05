@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>http://localhost:3000/</loc>
+    <lastmod>2025-01-05T20:18:54.249Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/basic-file-server/</loc>
+    <lastmod>2025-01-05T20:10:55.195Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/etc/docker/</loc>
+    <lastmod>2025-01-05T20:14:17.705Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/etc/faq/</loc>
+    <lastmod>2025-01-05T20:12:16.155Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/etc/ssh/</loc>
+    <lastmod>2025-01-05T20:14:01.245Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/rpc-io/</loc>
+    <lastmod>2025-01-05T20:11:18.777Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/thread-pool/</loc>
+    <lastmod>2025-01-05T20:11:29.549Z</lastmod>
+  </url>
+  <url>
+    <loc>http://localhost:3000/tutorial/</loc>
+    <lastmod>2025-01-05T20:11:39.911Z</lastmod>
+  </url>
+</urlset>

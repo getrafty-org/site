@@ -1,59 +1,6 @@
-<!doctype html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="supported-color-schemes" content="light dark">
-    <meta name="theme-color" content="hsl(220, 20%, 100%)" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="hsl(220, 20%, 10%)" media="(prefers-color-scheme: dark)">
-
-    <script>
-        (function () {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-            document.documentElement.dataset.theme = initialTheme;
-
-            const highlightTheme = initialTheme === 'dark'
-                ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-                : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-            document.write(`<link id="highlight-theme" rel="stylesheet" href="${highlightTheme}">`);
-        })();
-    </script>
-
-    <link rel="stylesheet" href="/static/main.css">
-    <link rel="stylesheet" href="/static/icomoon.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="http://localhost/rpc-io/">
-    <title>Getrafty.org</title>
-</head>
-
-<body>
-<header>
-    <nav class="navbar">
-        <ul class="navbar-links">
-            <li>
-                <button class="button theme-toggle">
-                    <a class="icon icon-magic" aria-hidden="true"></a>
-                </button>
-            </li>
-            <li>
-                <button class="button">
-                    <a class="icon icon-github" aria-hidden="true"
-                       href="https://github.com/getrafty-org"
-                       target="_blank"></a>
-                </button>
-            </li>
-        </ul>
-    </nav
-</header>
-
-<main>
-    <a href="/index">cd ~/</a>
-    <h1>Remote Procedure Calls</h1>
-<p>We begin exploration of the world of distributes systems from the concept of RPC. RPC is a design paradigm that allow two entities to communicate over a communication channel in a general request-response mechanism. RPC creates an abstraction connecting caller and callee hiding the complexity of faulty network under the hood. There are plenty of RPC implementations such as <a href="https://grpc.io/">gRPC</a>, <a href="https://thrift.apache.org/">Apache Thrift</a> or <a href="https://capnproto.org/">Cap'n Proto</a>.</p>
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head><meta charSet="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="robots" content="index, follow"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><meta name="supported-color-schemes" content="light dark"/><meta name="theme-color" content="hsl(220, 20%, 100%)" media="(prefers-color-scheme: light)"/><meta name="theme-color" content="hsl(220, 20%, 10%)" media="(prefers-color-scheme: dark)"/><link rel="stylesheet" href="/static/main.css"/><link rel="stylesheet" href="/static/icomoon.css"/><link id="highlight-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/><link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp"/><title>Getrafty.org</title><meta name="description" content="Write-ups and exercises on distributed backend systems, offering an overview of the basic concepts. Whether you&#x27;ve been curious about how distributed file systems function or wanted to explore the inner workings of your favorite RPC framework, you&#x27;re in the right place. Here, you&#x27;ll have the opportunity to build a fully functional toy version yourself."/><meta name="keywords" content="distributed systems, backend systems, raft consensus algorithm, c++ exercises, rpc framework, distributed file systems, fault-tolerant systems, queues and thread pools, basic primitives, toy implementations of systems, distributed file server, remote procedure calls, distributed backend tutorials, contributing to distributed systems, basics of distributed systems, rafty exercises, getrafty, learn distributed systems, c++ exercises, file server exercises, scenes from distributed systems"/></head><body><header><nav class="navbar"><ul class="navbar-links"><li><button class="button theme-toggle"><a class="icon icon-magic" aria-hidden="true"></a></button></li><li><button class="button"><a class="icon icon-github" aria-hidden="true" href="https://github.com/getrafty-org" target="_blank" rel="noopener noreferrer"></a></button></li></ul></nav></header><main><a href="/index">cd ~/</a><h1>Remote Procedure Calls</h1>
+<p>We begin exploration of the world of distributes systems from the concept of RPC. RPC is a design paradigm that allow two entities to communicate over a communication channel in a general request-response mechanism. RPC creates an abstraction connecting caller and callee hiding the complexity of faulty network under the hood. There are plenty of RPC implementations such as <a href="https://grpc.io/">gRPC</a>, <a href="https://thrift.apache.org/">Apache Thrift</a> or <a href="https://capnproto.org/">Cap&#x27;n Proto</a>.</p>
 <p>🍿 <a href="http://dist-prog-book.com/chapter/1/rpc.html">RPC is Not Dead: Rise, Fall and the Rise of Remote Procedure Calls</a></p>
 <p>Internally RPC deals a lot with IO, reading from and writing data back to <a href="https://en.wikipedia.org/wiki/Berkeley_sockets">sockets</a>. In this task you will implement this fundamental part of any RPC framework.</p>
 <p>Socket is a programming interface operating system exposes to interacting with the network card. The concept of sockets exists in any widely used operating system, e.g. <a href="https://en.wikipedia.org/wiki/POSIX">POSIX</a> specifies <a href="https://en.wikipedia.org/wiki/Berkeley_sockets">Berkeley sockets</a> interface.</p>
@@ -61,7 +8,7 @@
 <p>The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like <a href="https://man7.org/linux/man-pages/man7/epoll.7.html"><code>epoll</code></a> or higher level mechanisms like event loop, e.g. <a href="https://github.com/libuv/libuv"><code>libuv</code></a>.</p>
 <h3>Async IO</h3>
 <h3>Interface</h3>
-<p>For this task, we won’t be creating a fully functional event loop. Instead, we’ll concentrate on a specific aspect of its functionality: the notification mechanism. You're given a <code>EventWatcher</code> class implementing this mechanism. It allows to <code>watch</code> on a file descriptor and call a <code>IWatchCallback</code> callback whenever file descriptor becomes ready for reading or writing.</p>
+<p>For this task, we won’t be creating a fully functional event loop. Instead, we’ll concentrate on a specific aspect of its functionality: the notification mechanism. You&#x27;re given a <code>EventWatcher</code> class implementing this mechanism. It allows to <code>watch</code> on a file descriptor and call a <code>IWatchCallback</code> callback whenever file descriptor becomes ready for reading or writing.</p>
 <pre><code class="language-c++">class EventWatcher {
 public:
     void watch(int fd, WatchFlag flag, IWatchCallback *ch);
@@ -83,135 +30,11 @@ public:
 <h3>Where to Schedule Callbacks?</h3>
 <p>If a user-defined callback is scheduled on the same thread as the <code>waitLoop</code>, it can interfere with the loop logic impacting the overall performance. To address this, the <code>EventWatcher</code> allows specifying a thread pool in its constructor, which is used to run the main loop. This thread pool can also be utilized to execute user-provided callbacks.</p>
 <h3>Cancelling Wait</h3>
-<p>It's possible the <code>epoll_wait</code> will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched 'immediately' rather than after the current loop cycle.  Consider using <a href="https://cr.yp.to/docs/selfpipe.html">self pipe trick</a> or timeout for epoll wait. <em>Which one is better and why?</em></p>
+<p>It&#x27;s possible the <code>epoll_wait</code> will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched &#x27;immediately&#x27; rather than after the current loop cycle.  Consider using <a href="https://cr.yp.to/docs/selfpipe.html">self pipe trick</a> or timeout for epoll wait. <em>Which one is better and why?</em></p>
 <h3>Synchronisation in Multi-Threaded Environment</h3>
 <p>The epoll can detect fd being read / written in the callback as ready. This can result in data race unless proper synchronization is used inside user-defined callback structure. Think about ways to guarantee the callback are mutually exclusive for the same fd without requiring user-defined callback to synchronise access to fd.</p>
 <h3>🧠 Task</h3>
 <p>Your task is to implement <code>waitLoop</code> method of the <a href="https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher.hpp"><code>EventWatcher</code></a> class using <a href="https://man7.org/linux/man-pages/man2/epoll_wait.2.html#top_of_page"><code>epoll_wait</code></a>.</p>
 <h3>Verification</h3>
 <p>Tests are located in <a href="https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher_test.cpp"><code>event_watcher_test.cpp</code></a>.</p>
-<p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/getrafty-org/getrafty/issues">GitHub</a>.</p>
-
-</main>
-
-<!-- Place scripts at the end for better performance -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-<script>
-    const themes = {
-        light: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
-        dark: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-    };
-
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        document.querySelector('.theme-toggle').addEventListener('click', async () => {
-            await setThemeAsync(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
-        });
-        const images = document.querySelectorAll('img');
-        await Promise.all([...images].map(async (image) => {
-            image.style.display = 'none';
-        }));
-    });
-
-    window.addEventListener('load', async () => {
-        await setThemeAsync(
-            localStorage.getItem('theme') ||
-            (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-        await addAnchorsToHeaders();
-    });
-
-    async function setThemeAsync(currentTheme) {
-        document.documentElement.dataset.theme = currentTheme;
-        localStorage.setItem('theme', currentTheme);
-        document.getElementById('highlight-theme').href = themes[currentTheme];
-
-        const images = Array.from(document.querySelectorAll('img'));
-        await Promise.all(images.map(image => setupImageCanvasAsync(image, currentTheme)));
-
-        requestAnimationFrame(() => hljs.highlightAll());
-    }
-
-
-    async function getOrAttachCanvas(image) {
-        if (!image.dataset.originalSrc) {
-            image.dataset.originalSrc = image.src;
-        }
-        let canvas = image.nextElementSibling?.tagName === 'CANVAS' ? image.nextElementSibling : false;
-        if (canvas) {
-            return canvas;
-        }
-        canvas = document.createElement('canvas');
-        canvas.className = 'imageCanvas';
-        const styles = getComputedStyle(image);
-        Object.assign(canvas.style, {
-            width: styles.width,
-            height: styles.height,
-            display: 'block',
-            objectFit: styles.objectFit,
-            maxWidth: styles.maxWidth,
-            maxHeight: styles.maxHeight
-        });
-        image.parentNode.insertBefore(canvas, image.nextSibling);
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        return canvas;
-    }
-
-
-    async function setupImageCanvasAsync(image, theme) {
-        const canvas = await getOrAttachCanvas(image);
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0);
-        image.style.display = 'none';
-        if (theme === "dark") {
-            darkenImage(ctx);
-        }
-    }
-
-
-    async function addAnchorsToHeaders() {
-        document.querySelectorAll("h1, h2, h3").forEach(header => {
-            if (!header.id) {
-                const slug = header.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-                header.id = slug;
-
-                const anchor = document.createElement('a');
-                anchor.href = `#${slug}`;
-                anchor.className = 'anchor-link';
-                anchor.textContent = header.textContent;
-
-                header.textContent = '';
-                header.appendChild(anchor);
-            }
-        });
-    }
-
-    function darkenImage(ctx) {
-        const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-        const data = imageData.data;
-        const darkR = 13, darkG = 17, darkB = 23;
-        const whiteThreshold = 230;
-
-        const length = data.length;
-        for (let i = 0; i < length; i += 4) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            // Weighted brightness using Rec. 709 formula
-            if (0.2126 * r + 0.7152 * g + 0.0722 * b > whiteThreshold) {
-                data[i] = darkR;
-                data[i + 1] = darkG;
-                data[i + 2] = darkB;
-            } else {
-                data[i] = 255 - r;
-                data[i + 1] = 255 - g;
-                data[i + 2] = 255 - b;
-            }
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-    }
-
-</script>
-</body>
-</html>
+<p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/getrafty-org/getrafty/issues">GitHub</a>.</p></main><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script><script type="module" src="/static/main.js"></script></body></html>

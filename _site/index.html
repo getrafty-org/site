@@ -1,65 +1,12 @@
-<!doctype html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="supported-color-schemes" content="light dark">
-    <meta name="theme-color" content="hsl(220, 20%, 100%)" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="hsl(220, 20%, 10%)" media="(prefers-color-scheme: dark)">
-
-    <script>
-        (function () {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-
-            document.documentElement.dataset.theme = initialTheme;
-
-            const highlightTheme = initialTheme === 'dark'
-                ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-                : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-            document.write(`<link id="highlight-theme" rel="stylesheet" href="${highlightTheme}">`);
-        })();
-    </script>
-
-    <link rel="stylesheet" href="/static/main.css">
-    <link rel="stylesheet" href="/static/icomoon.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp">
-    <link rel="canonical" href="http://localhost/">
-    <title>Getrafty.org</title>
-</head>
-
-<body>
-<header>
-    <nav class="navbar">
-        <ul class="navbar-links">
-            <li>
-                <button class="button theme-toggle">
-                    <a class="icon icon-magic" aria-hidden="true"></a>
-                </button>
-            </li>
-            <li>
-                <button class="button">
-                    <a class="icon icon-github" aria-hidden="true"
-                       href="https://github.com/getrafty-org"
-                       target="_blank"></a>
-                </button>
-            </li>
-        </ul>
-    </nav
-</header>
-
-<main>
-    <a href="/index">cd ~/</a>
-    <h1>Getrafty</h1>
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head><meta charSet="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="robots" content="index, follow"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><meta name="supported-color-schemes" content="light dark"/><meta name="theme-color" content="hsl(220, 20%, 100%)" media="(prefers-color-scheme: light)"/><meta name="theme-color" content="hsl(220, 20%, 10%)" media="(prefers-color-scheme: dark)"/><link rel="stylesheet" href="/static/main.css"/><link rel="stylesheet" href="/static/icomoon.css"/><link id="highlight-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/><link rel="icon" type="image/png" sizes="32x32" href="/static/img/rafty64.webp"/><title>Getrafty.org</title><meta name="description" content="Write-ups and exercises on distributed backend systems, offering an overview of the basic concepts. Whether you&#x27;ve been curious about how distributed file systems function or wanted to explore the inner workings of your favorite RPC framework, you&#x27;re in the right place. Here, you&#x27;ll have the opportunity to build a fully functional toy version yourself."/><meta name="keywords" content="distributed systems, backend systems, raft consensus algorithm, c++ exercises, rpc framework, distributed file systems, fault-tolerant systems, queues and thread pools, basic primitives, toy implementations of systems, distributed file server, remote procedure calls, distributed backend tutorials, contributing to distributed systems, basics of distributed systems, rafty exercises, getrafty, learn distributed systems, c++ exercises, file server exercises, scenes from distributed systems"/></head><body><header><nav class="navbar"><ul class="navbar-links"><li><button class="button theme-toggle"><a class="icon icon-magic" aria-hidden="true"></a></button></li><li><button class="button"><a class="icon icon-github" aria-hidden="true" href="https://github.com/getrafty-org" target="_blank" rel="noopener noreferrer"></a></button></li></ul></nav></header><main><a href="/index">cd ~/</a><h1>Getrafty</h1>
 <p>This project aims to provide a variety of write-ups and exercises on distributed backend systems, offering an overview of the basic concepts.
-Whether you've been curious about how <a href="https://static.googleusercontent.com/media/research.google.com/en//archive/gfs-sosp2003.pdf">distributed file systems</a> function or wanted to explore the inner workings of <a href="https://en.wikipedia.org/wiki/Apache_Thrift">your favorite RPC framework</a>, you're in the right place.
-Here, you'll have the opportunity to build a fully functional toy version yourself.</p>
+Whether you&#x27;ve been curious about how <a href="https://static.googleusercontent.com/media/research.google.com/en//archive/gfs-sosp2003.pdf">distributed file systems</a> function or wanted to explore the inner workings of <a href="https://en.wikipedia.org/wiki/Apache_Thrift">your favorite RPC framework</a>, you&#x27;re in the right place.
+Here, you&#x27;ll have the opportunity to build a fully functional toy version yourself.</p>
 <p>The exercises are mainly standalone tasks, each focusing on a specific topic. Every exercise includes a C++ boilerplate implementation that you will need to modify.</p>
 <p>Please keep your forked repository private and refrain from sharing your solutions publicly. Thank you! ❤️</p>
 <p>Get ready 🍿</p>
-<p><img src="/static/img/scenes-from-distributed-systems.webp" alt="Scenes from distributed systems">
+<p><img src="/static/img/scenes-from-distributed-systems.webp" alt="Scenes from distributed systems"/>
 <em><a href="https://x.com/b0rk/status/1056560207562711041">Scenes from distributed systems, X (Twitter)</a></em></p>
 <h2>Catch</h2>
 <p><a href="https://brooker.co.za/blog/2020/01/02/why-distributed.html">Why do we need distributed systems anyway?</a></p>
@@ -80,9 +27,8 @@ Here, you'll have the opportunity to build a fully functional toy version yourse
 <li>
 <p>Instructions</p>
 <ul>
-<li><a href="etc/use-docker">Install Docker</a></li>
-<li><a href="etc/connect-over-ssh">SSH to dev container</a></li>
-<li><a href="etc/use-vscode">How to use this repository with VSCode</a></li>
+<li><a href="etc/docker">Install Docker</a></li>
+<li><a href="etc/ssh">SSH to dev container</a></li>
 </ul>
 </li>
 <li>
@@ -94,129 +40,5 @@ Here, you'll have the opportunity to build a fully functional toy version yourse
 If you have found a bug, please create an issue (or pull request) <a href="https://github.com/getrafty-org/getrafty">in the repository</a>.</p>
 <h2>License</h2>
 <p>The source and documentation are released under the <a href="https://github.com/getrafty-org/getrafty/blob/main/LICENSE">MIT License</a>.</p>
-<hr>
-<p><em>How did &quot;Getrafty&quot; get its name? I found it to be an amusing twist on words. One of the main concepts touched on in the workbook is the <a href="https://raft.github.io/">Raft Consensus Algorithm</a></em>.</p>
-
-</main>
-
-<!-- Place scripts at the end for better performance -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-<script>
-    const themes = {
-        light: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
-        dark: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-    };
-
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        document.querySelector('.theme-toggle').addEventListener('click', async () => {
-            await setThemeAsync(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
-        });
-        const images = document.querySelectorAll('img');
-        await Promise.all([...images].map(async (image) => {
-            image.style.display = 'none';
-        }));
-    });
-
-    window.addEventListener('load', async () => {
-        await setThemeAsync(
-            localStorage.getItem('theme') ||
-            (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-        await addAnchorsToHeaders();
-    });
-
-    async function setThemeAsync(currentTheme) {
-        document.documentElement.dataset.theme = currentTheme;
-        localStorage.setItem('theme', currentTheme);
-        document.getElementById('highlight-theme').href = themes[currentTheme];
-
-        const images = Array.from(document.querySelectorAll('img'));
-        await Promise.all(images.map(image => setupImageCanvasAsync(image, currentTheme)));
-
-        requestAnimationFrame(() => hljs.highlightAll());
-    }
-
-
-    async function getOrAttachCanvas(image) {
-        if (!image.dataset.originalSrc) {
-            image.dataset.originalSrc = image.src;
-        }
-        let canvas = image.nextElementSibling?.tagName === 'CANVAS' ? image.nextElementSibling : false;
-        if (canvas) {
-            return canvas;
-        }
-        canvas = document.createElement('canvas');
-        canvas.className = 'imageCanvas';
-        const styles = getComputedStyle(image);
-        Object.assign(canvas.style, {
-            width: styles.width,
-            height: styles.height,
-            display: 'block',
-            objectFit: styles.objectFit,
-            maxWidth: styles.maxWidth,
-            maxHeight: styles.maxHeight
-        });
-        image.parentNode.insertBefore(canvas, image.nextSibling);
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        return canvas;
-    }
-
-
-    async function setupImageCanvasAsync(image, theme) {
-        const canvas = await getOrAttachCanvas(image);
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0);
-        image.style.display = 'none';
-        if (theme === "dark") {
-            darkenImage(ctx);
-        }
-    }
-
-
-    async function addAnchorsToHeaders() {
-        document.querySelectorAll("h1, h2, h3").forEach(header => {
-            if (!header.id) {
-                const slug = header.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-                header.id = slug;
-
-                const anchor = document.createElement('a');
-                anchor.href = `#${slug}`;
-                anchor.className = 'anchor-link';
-                anchor.textContent = header.textContent;
-
-                header.textContent = '';
-                header.appendChild(anchor);
-            }
-        });
-    }
-
-    function darkenImage(ctx) {
-        const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-        const data = imageData.data;
-        const darkR = 13, darkG = 17, darkB = 23;
-        const whiteThreshold = 230;
-
-        const length = data.length;
-        for (let i = 0; i < length; i += 4) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            // Weighted brightness using Rec. 709 formula
-            if (0.2126 * r + 0.7152 * g + 0.0722 * b > whiteThreshold) {
-                data[i] = darkR;
-                data[i + 1] = darkG;
-                data[i + 2] = darkB;
-            } else {
-                data[i] = 255 - r;
-                data[i + 1] = 255 - g;
-                data[i + 2] = 255 - b;
-            }
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-    }
-
-</script>
-</body>
-</html>
+<hr/>
+<p><em>How did &quot;Getrafty&quot; get its name? I found it to be an amusing twist on words. One of the main concepts touched on in the workbook is the <a href="https://raft.github.io/">Raft Consensus Algorithm</a></em>.</p></main><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script><script type="module" src="/static/main.js"></script></body></html>
