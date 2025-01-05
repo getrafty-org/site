@@ -631,6 +631,15 @@ strong {
     font-weight: var(--font-bold)
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    text-align: left;
+}
+
 .icon {
     align-items: center;
     display: inline-flex;
@@ -1176,6 +1185,7 @@ main > p > img {
 }
 
 .navbar-links {
+    position: fixed;
     padding: 0;
     margin: 0;
     list-style: none;
@@ -1187,6 +1197,11 @@ main > p > img {
 
     & [aria-current="page"] {
         text-decoration: none;
+    }
+}
+@media (max-width: 768px) {
+    .navbar-links {
+        position: absolute;
     }
 }
 
@@ -1265,3 +1280,11 @@ p > code {
     font-weight: inherit;
 }
 
+.img-cap {
+    text-align: center;
+    display: block;
+    margin-top: -0.5em;
+    font-size: .95em;
+    font-style: italic;
+    color: var(--color-dim);
+}

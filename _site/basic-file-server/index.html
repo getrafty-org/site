@@ -5,6 +5,8 @@ To bridge this gap, we’ll explore the construction of a toy distributed filesy
 To begin the conversation, let&#x27;s consider how the high level interface of this system may look like.</p>
 <p>There are multiple options here - it could expose a web interface (e.g. Dropbox), be natively integrated to OS or both. This workbench is primarily focused on infrastructure systems, and thus it will focus on integrated approach.</p>
 <p>From the OS standpoint, filesystem is an abstraction providing read and write operations on top of storage hardware implementing/utilizing <a href="https://en.wikipedia.org/wiki/Virtual_file_system">Virtual Filesystem (VFS)</a> interface. VFSes are adopted by popular operating systems like Linux, is particularly advantageous for our goal. Remarkably, it enables us to design our own filesystem without modifying the kernel, thanks to tools like <a href="https://en.wikipedia.org/wiki/Filesystem_in_Userspace">FUSE</a>.</p>
-<p><img src="/static/img/fuse.png" alt="Scenes from distributed systems"/></p>
+<p><img src="/static/img/fuse.png" alt="Fuse"/></p>
+<a data-component="ImgCap" href="#" class="img-cap">FUSE + VFS</a>
 <p>Exciting, isn’t it? Our toy filesystem will leverage this approach, abstracting away the complexities of storage—whether it resides locally or is distributed across dozens, hundreds, or even thousands of nodes.</p>
-<h2>Node</h2></main><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script><script type="module" src="/static/main.js"></script></body></html>
+<h2>Node</h2>
+<div data-component="Oops"><p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/getrafty-org/getrafty/issues">GitHub</a>.</p></div></main><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script><script type="module" src="/static/main.js"></script></body></html>

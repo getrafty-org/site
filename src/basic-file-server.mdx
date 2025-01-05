@@ -13,9 +13,15 @@ There are multiple options here - it could expose a web interface (e.g. Dropbox)
 
 From the OS standpoint, filesystem is an abstraction providing read and write operations on top of storage hardware implementing/utilizing [Virtual Filesystem (VFS)](https://en.wikipedia.org/wiki/Virtual_file_system) interface. VFSes are adopted by popular operating systems like Linux, is particularly advantageous for our goal. Remarkably, it enables us to design our own filesystem without modifying the kernel, thanks to tools like [FUSE](https://en.wikipedia.org/wiki/Filesystem_in_Userspace).
 
-![Scenes from distributed systems](/static/img/fuse.png)
+![Fuse](/static/img/fuse.png)
+<comp.ImgCap
+    title="FUSE + VFS"
+    href="#"/>
 
 Exciting, isn’t it? Our toy filesystem will leverage this approach, abstracting away the complexities of storage—whether it resides locally or is distributed across dozens, hundreds, or even thousands of nodes.
 
 
 ## Node
+
+
+<comp.Oops/>
