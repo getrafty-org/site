@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head><meta charSet="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="robots" content="index, follow"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><meta name="supported-color-schemes" content="light dark"/><meta name="theme-color" content="hsl(220, 20%, 100%)" media="(prefers-color-scheme: light)"/><meta name="theme-color" content="hsl(220, 20%, 10%)" media="(prefers-color-scheme: dark)"/><link rel="stylesheet" href="/static/main.css"/><link rel="stylesheet" href="/static/icomoon.css"/><link id="highlight-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/><link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml"/><link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)"/><link rel="icon" href="/static/img/mascot-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)"/><title>Getrafty</title><meta name="description" content="Write-ups and exercises on distributed backend systems, offering an overview of the basic concepts. Whether you&#x27;ve been curious about how distributed file systems function or wanted to explore the inner workings of your favorite RPC framework, you&#x27;re in the right place. Here, you&#x27;ll have the opportunity to build a fully functional toy version yourself."/><meta name="keywords" content="distributed systems, backend systems, raft consensus algorithm, c++ exercises, rpc framework, distributed file systems, fault-tolerant systems, queues and thread pools, basic primitives, toy implementations of systems, distributed file server, remote procedure calls, distributed backend tutorials, contributing to distributed systems, basics of distributed systems, rafty exercises, getrafty, learn distributed systems, c++ exercises, file server exercises, scenes from distributed systems"/></head><body><header><nav class="navbar"><ul class="navbar-links"><li><button class="button theme-toggle"><a class="icon icon-magic" aria-hidden="true"></a></button></li><li><button class="button"><a class="icon icon-github" aria-hidden="true" href="https://github.com/getrafty-org" target="_blank" rel="noopener noreferrer"></a></button></li></ul></nav></header><main><a href="/index">cd ~/</a><h1>Intro</h1>
+<p>When you look at servers, it feels like they&#x27;re doing all sorts of smart stuff. But if you step back, most of the time they&#x27;re just... moving bytes around. Read some data, write some data, wait for more. It&#x27;s kind of boring, but also, that&#x27;s the core of everything.</p>
+<p>I keep coming back to IO because no matter what kind of system we try to build, it&#x27;s always there underneath. Frameworks usually hide the details - which is convenient - but I kind of want to poke at it myself. Like, how exactly do those bytes get packed up and shipped across the wire?</p>
+<h2>Let&#x27;s Talk About IO</h2>
+<p>IO covers a wide landscape. It can mean reading from disk, sending over the network, and other mechanisms the OS gives us. Since we&#x27;re talking about distributed systems, the piece we care about most is network IO.</p>
+<p>And the OS gives us a tool for that: <a href="https://en.wikipedia.org/wiki/Berkeley_sockets">socket</a>. At the bottom of it socket is the kernel&#x27;s abstraction for network communication - basically a handle you use to say &quot;send these bytes out&quot; or &quot;wake me up when new bytes arrive&quot;. Every major operating system has this concept</p>
+<p>Once you start working with sockets</p>
+<p>The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like <a href="https://man7.org/linux/man-pages/man7/epoll.7.html"><code>epoll</code></a> or higher level mechanisms like event loop, e.g. <a href="https://github.com/libuv/libuv"><code>libuv</code></a>.</p>
+<h3>Async IO</h3>
+<h3>Interface</h3>
+<p>For this task, we won’t be creating a fully functional event loop. Instead, we’ll concentrate on a specific aspect of its functionality: the notification mechanism. You&#x27;re given a <code>EventWatcher</code> class implementing this mechanism. It allows to <code>watch</code> on a file descriptor and call a <code>IWatchCallback</code> callback whenever file descriptor becomes ready for reading or writing.</p>
+<pre><code class="language-c++">class EventWatcher {
+public:
+    void watch(int fd, WatchFlag flag, IWatchCallback *ch);
+    void unwatch(int fd);
+    void unwatchAll();
+    static EventWatcher &amp;getInstance();
+private:
+    // Waiting for file to become ready for reading/writing and scheduling callback. 
+    void waitLoop();
+};
+</code></pre>
+<p>The callback is called once fd (e.g. socket) becomes ready.</p>
+<pre><code class="language-c++">class IWatchCallback {
+public:
+    virtual void onReadReady(int fd) = 0;
+    virtual void onWriteReady(int fd) = 0;
+};
+</code></pre>
+<h3>Where to Schedule Callbacks?</h3>
+<p>If a user-defined callback is scheduled on the same thread as the <code>waitLoop</code>, it can interfere with the loop logic impacting the overall performance. To address this, the <code>EventWatcher</code> allows specifying a thread pool in its constructor, which is used to run the main loop. This thread pool can also be utilized to execute user-provided callbacks.</p>
+<h3>Cancelling Wait</h3>
+<p>It&#x27;s possible the <code>epoll_wait</code> will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched &#x27;immediately&#x27; rather than after the current loop cycle.  Consider using <a href="https://cr.yp.to/docs/selfpipe.html">self pipe trick</a> or timeout for epoll wait. <em>Which one is better and why?</em></p>
+<h3>Synchronisation in Multi-Threaded Environment</h3>
+<p>The epoll can detect fd being read / written in the callback as ready. This can result in data race unless proper synchronization is used inside user-defined callback structure. Think about ways to guarantee the callback are mutually exclusive for the same fd without requiring user-defined callback to synchronise access to fd.</p>
+<h3>🧠 Task</h3>
+<p>Your task is to implement <code>waitLoop</code> method of the <a href="https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher.hpp"><code>EventWatcher</code></a> class using <a href="https://man7.org/linux/man-pages/man2/epoll_wait.2.html#top_of_page"><code>epoll_wait</code></a>.</p>
+<h3>Verification</h3>
+<p>Tests are located in <a href="https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher_test.cpp"><code>event_watcher_test.cpp</code></a>.</p>
+<div data-component="Oops"><p>Have questions? Check <a href="/etc/faq/">Q&amp;A</a> for most common issues or file an issue on the <a href="https://github.com/getrafty-org/getrafty/issues">GitHub</a>.</p></div></main><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script><script type="module" src="/static/main.js"></script></body></html>

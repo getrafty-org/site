@@ -1,4 +1,3 @@
-import React, { useEffect } from "https://esm.sh/react@18";
 
 export default function Layout({ children }) {
     return (
@@ -18,8 +17,12 @@ export default function Layout({ children }) {
                 rel="stylesheet"
                 href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
             />
-            <link rel="icon" type="image/png" sizes="32x32" href="/static/img/mascot.svg"/>
-            <title>Getrafty.org</title>
+            <link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml"/>
+            <link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml"
+                  media="(prefers-color-scheme: light)"/>
+            <link rel="icon" href="/static/img/mascot-dark.svg" type="image/svg+xml"
+                  media="(prefers-color-scheme: dark)"/>
+            <title>Getrafty</title>
             <meta name="description"
                   content="Write-ups and exercises on distributed backend systems, offering an overview of the basic concepts. Whether you've been curious about how distributed file systems function or wanted to explore the inner workings of your favorite RPC framework, you're in the right place. Here, you'll have the opportunity to build a fully functional toy version yourself."/>
             <meta name="keywords"

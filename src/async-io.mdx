@@ -3,17 +3,19 @@ layout: layout.jsx
 ---
 
 
-# Remote Procedure Calls
+# Intro
 
-We begin exploration of the world of distributes systems from the concept of RPC. RPC is a design paradigm that allow two entities to communicate over a communication channel in a general request-response mechanism. RPC creates an abstraction connecting caller and callee hiding the complexity of faulty network under the hood. There are plenty of RPC implementations such as [gRPC](https://grpc.io/), [Apache Thrift](https://thrift.apache.org/) or [Cap'n Proto](https://capnproto.org/).
+When you look at servers, it feels like they're doing all sorts of smart stuff. But if you step back, most of the time they're just... moving bytes around. Read some data, write some data, wait for more. It's kind of boring, but also, that's the core of everything.
 
- [🍿 RPC is Not Dead: Rise, Fall and the Rise of Remote Procedure Calls](http://dist-prog-book.com/chapter/1/rpc.html)
+I keep coming back to IO because no matter what kind of system we try to build, it's always there underneath. Frameworks usually hide the details - which is convenient - but I kind of want to poke at it myself. Like, how exactly do those bytes get packed up and shipped across the wire?
 
-Internally RPC deals a lot with IO, reading from and writing data back to [sockets](https://en.wikipedia.org/wiki/Berkeley_sockets). In this task you will implement this fundamental part of any RPC framework.
+## Let's Talk About IO
 
-Socket is a programming interface operating system exposes to interacting with the network card. The concept of sockets exists in any widely used operating system, e.g. [POSIX](https://en.wikipedia.org/wiki/POSIX) specifies [Berkeley sockets](https://en.wikipedia.org/wiki/Berkeley_sockets) interface.
+IO covers a wide landscape. It can mean reading from disk, sending over the network, and other mechanisms the OS gives us. Since we're talking about distributed systems, the piece we care about most is network IO.
 
-In Linux (using Berkeley sockets), sockets can work in two modes: blocking and non-blocking. In blocking mode, a thread waits until data is available, which can lead to wasted CPU time. Instead, we will use non-blocking mode, where threads don’t have to sit idle while waiting for data, it can do something different before  operating system notifies it. This approach helps make better use of threads and system resources. We refer to this method as asynchronous I/O.
+And the OS gives us a tool for that: [socket](https://en.wikipedia.org/wiki/Berkeley_sockets). At the bottom of it socket is the kernel's abstraction for network communication - basically a handle you use to say "send these bytes out" or "wake me up when new bytes arrive". Every major operating system has this concept
+
+Once you start working with sockets
 
 The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like [`epoll`](https://man7.org/linux/man-pages/man7/epoll.7.html) or higher level mechanisms like event loop, e.g. [`libuv`](https://github.com/libuv/libuv).    
 
