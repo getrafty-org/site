@@ -1,0 +1,7 @@
+_site
+node_modules
+.git
+.github
+*.md
+LICENSE
+.gitignore
