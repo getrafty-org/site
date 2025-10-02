@@ -751,24 +751,33 @@ blockquote {
 .breadcrumb {
     display: flex;
     flex-wrap: wrap;
-    font: var(--font-small);
+    font: var(--font-code);
     list-style: none;
-    margin: 0;
-    padding: 0
+    margin: 0 0 1.5em 0;
+    padding: 0;
+    color: var(--color-dim);
 }
 
 .breadcrumb > li:after {
     content: "/";
     display: inline-block;
-    padding: 0 .5em
+    padding: 0 .5em;
+    color: var(--color-dim);
+}
+
+.breadcrumb > li:last-child:after {
+    content: "";
+    padding: 0;
 }
 
 .breadcrumb a {
-    text-decoration: none
+    text-decoration: none;
+    color: var(--color-link);
 }
 
 .breadcrumb a:hover {
-    text-decoration: underline
+    text-decoration: underline;
+    color: var(--color-link-hover);
 }
 
 .button {
@@ -1029,6 +1038,45 @@ pre[class*=language-] {
     display: block
 }
 
+/* Search index UI */
+.search-index {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.search-index .search-input {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    background: transparent;
+    padding: 0.45rem 0.6rem;
+    font: var(--font-small);
+}
+
+.search-index .search-input::placeholder {
+    color: var(--color-dim);
+}
+
+.search-index .search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+
+.search-index .search-input::-ms-clear {
+    display: none;
+}
+
+.search-index .search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--color-line);
+}
+
+.search-empty {
+    margin: 1.5rem 0 0;
+    color: var(--color-dim);
+    font: var(--font-small);
+}
+
 .pagination-prev {
     grid-column: 1;
     text-align: left
@@ -1287,4 +1335,126 @@ p > code {
     font-size: .95em;
     font-style: italic;
     color: var(--color-dim);
+}
+
+/* Thread list styles */
+.thread-list {
+    margin: 2em 0;
+}
+
+.thread-item {
+    margin-bottom: 3em;
+    padding-bottom: 2em;
+    border-bottom: 1px solid var(--color-line);
+}
+
+.thread-item:last-child {
+    border-bottom: none;
+}
+
+.thread-item h2 {
+    margin: 0 0 0.5em 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.thread-item h2 a {
+    text-decoration: none;
+}
+
+.thread-item h2 a:hover {
+    text-decoration: underline;
+}
+
+.thread-meta {
+    font: var(--font-small);
+    color: var(--color-dim);
+    margin-bottom: 0.75em;
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+}
+
+.thread-description {
+    margin: 0.75em 0;
+    color: var(--color-text);
+}
+
+.thread-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin-top: 0.75em;
+}
+
+.thread-tags .tag {
+    font: var(--font-small);
+    color: var(--color-dim);
+    text-decoration: none;
+}
+
+.thread-tags .tag:hover {
+    color: var(--color-text);
+}
+
+.thread-actions {
+    margin-top: 1em;
+}
+
+.thread-link {
+    font: var(--font-small);
+    color: var(--color-link);
+    text-decoration: none;
+}
+
+.thread-link:hover {
+    text-decoration: underline;
+}
+
+/* Breadcrumb navigation styling */
+.breadcrumb-nav {
+    font: var(--font-code);
+    color: var(--color-dim);
+    margin-bottom: 1.5em;
+}
+
+/* Post list - minimal */
+.post-list {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+}
+
+.post-item {
+    display: grid;
+    grid-template-columns: minmax(10ch, auto) minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 1.25rem;
+    margin-bottom: 0.9rem;
+}
+
+.post-link {
+    text-decoration: none;
+    font: var(--font-small);
+}
+
+.post-link:hover {
+    text-decoration: underline;
+}
+
+.external-indicator {
+    margin-left: 0.35rem;
+    font-size: 0.85em;
+}
+
+.post-date {
+    color: var(--color-dim);
+    font: var(--font-small);
+    white-space: nowrap;
+}
+
+.post-author {
+    font: var(--font-small);
+    color: var(--color-dim);
+    white-space: nowrap;
 }

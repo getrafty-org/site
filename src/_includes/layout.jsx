@@ -52,7 +52,6 @@ export default function Layout({ children }) {
             </nav>
         </header>
         <main>
-            <a href="/index">cd ~/</a>
             {children}
         </main>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"/>

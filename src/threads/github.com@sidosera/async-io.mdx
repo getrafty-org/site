@@ -1,0 +1,79 @@
+---
+layout: layout.jsx
+title: "Async I/O"
+date: 2025-09-10
+---
+
+
+# Intro
+
+When you look at servers, it feels like they're doing all sorts of smart stuff. But if you step back, most of the time they're just... moving bytes around. Read some data, write some data, wait for more. It's kind of boring, but also, that's the core of everything.
+
+I keep coming back to IO because no matter what kind of system we try to build, it's always there underneath. Frameworks usually hide the details - which is convenient - but I kind of want to poke at it myself. Like, how exactly do those bytes get packed up and shipped across the wire?
+
+## Let's Talk About IO
+
+IO covers a wide landscape. It can mean reading from disk, sending over the network, and other mechanisms the OS gives us. Since we're talking about distributed systems, the piece we care about most is network IO.
+
+And the OS gives us a tool for that: [socket](https://en.wikipedia.org/wiki/Berkeley_sockets). At the bottom of it socket is the kernel's abstraction for network communication - basically a handle you use to say "send these bytes out" or "wake me up when new bytes arrive". Every major operating system has this concept
+
+Once you start working with sockets you quickly find they can operate in different mode.
+
+The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like [`epoll`](https://man7.org/linux/man-pages/man7/epoll.7.html) or higher level mechanisms like event loop, e.g. [`libuv`](https://github.com/libuv/libuv).    
+
+### Async IO
+
+### Interface
+
+For this task, we won't be creating a fully functional event loop. Instead, we'll concentrate on a specific aspect of its functionality: the notification mechanism. You're given a `EventWatcher` class implementing this mechanism. It allows to `watch` on a file descriptor and call a `IWatchCallback` callback whenever file descriptor becomes ready for reading or writing.
+
+```c++
+class EventWatcher {
+public:
+    void watch(int fd, WatchFlag flag, IWatchCallback *ch);
+    void unwatch(int fd);
+    void unwatchAll();
+    static EventWatcher &getInstance();
+private:
+    // Waiting for file to become ready for reading/writing and scheduling callback. 
+    void waitLoop();
+};
+```
+
+The callback is called once fd (e.g. socket) becomes ready. 
+
+```c++
+class IWatchCallback {
+public:
+    virtual void call(int fd) = 0;
+};
+```
+
+### Where to Schedule Callbacks?
+
+If a user-defined callback is scheduled on the same thread as the `waitLoop`, it can interfere with the loop logic impacting the overall performance. To address this, the `EventWatcher` allows specifying a thread pool in its constructor, which is used to run the main loop. This thread pool can also be utilized to execute user-provided callbacks.
+
+### Cancelling Wait
+
+It's possible the `epoll_wait` will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched 'immediately' rather than after the current loop cycle.  Consider using [self pipe trick](https://cr.yp.to/docs/selfpipe.html) or timeout for epoll wait. *Which one is better and why?*
+
+### Synchronisation in Multi-Threaded Environment
+
+The epoll can detect fd being read / written in the callback as ready. This can result in data race unless proper synchronization is used inside user-defined callback structure. Think about ways to guarantee the callback are mutually exclusive for the same fd without requiring user-defined callback to synchronise access to fd.     
+
+### 🧠 Task
+
+Your task is to implement `waitLoop` method of the [`EventWatcher`](https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher.hpp) class using [`epoll_wait`](https://man7.org/linux/man-pages/man2/epoll_wait.2.html#top_of_page).
+
+### Testing
+
+Tests are located in [`event_watcher_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher_test.cpp).
+
+<comp.Oops/>
+
+
+
+
+
+
+
