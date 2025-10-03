@@ -5,61 +5,73 @@ date: 2025-09-10
 ---
 
 
-# Intro
+# Async IO
 
 When you look at servers, it feels like they're doing all sorts of smart stuff. But if you step back, most of the time they're just... moving bytes around. Read some data, write some data, wait for more. It's kind of boring, but also, that's the core of everything.
 
 I keep coming back to IO because no matter what kind of system we try to build, it's always there underneath. Frameworks usually hide the details - which is convenient - but I kind of want to poke at it myself. Like, how exactly do those bytes get packed up and shipped across the wire?
 
-## Let's Talk About IO
+## Terminology
 
-IO covers a wide landscape. It can mean reading from disk, sending over the network, and other mechanisms the OS gives us. Since we're talking about distributed systems, the piece we care about most is network IO.
+"IO" can mean a lot of different things - reading from disk, sending bytes over the network, or even talking to hardware through [DMA](https://en.wikipedia.org/wiki/Direct_memory_access). Since we're focused on distributed systems, the piece we care about most is network IO.
+Network devices are accessible via [sockets](https://en.wikipedia.org/wiki/Berkeley_sockets). A socket is basically the OS handing you a handle and saying: *“use this to send bytes out, or I’ll poke you when new bytes show up.”*. Every major operating system has this concept. 
 
-And the OS gives us a tool for that: [socket](https://en.wikipedia.org/wiki/Berkeley_sockets). At the bottom of it socket is the kernel's abstraction for network communication - basically a handle you use to say "send these bytes out" or "wake me up when new bytes arrive". Every major operating system has this concept
+Now, sockets aren't all the same. They can work in blocking [mode](https://man7.org/linux/man-pages/man7/socket.7.html), where a thread waits until data shows up, or in non-blocking mode, where you tell the OS “let me know when this is ready.” Blocking is easy to use but doesn't scale if you've got lots of connections - threads just end up sitting idle. Non-blocking avoids that by handing control back to you until there's actual work to do.
 
-Once you start working with sockets you quickly find they can operate in different mode.
+On Linux, this is achieved via [`epoll`](https://man7.org/linux/man-pages/man7/epoll.7.html) which gives us a way to monitor many sockets at once and only act on the ones that are ready. Libraries like [Asio](https://think-async.com/Asio/index.html) for C++ or [Tokio](https://tokio.rs/) for Rust use it internally. 
 
-The asynchronous IO is done using the concept of multiplexing implemented via OS mechanisms like [`epoll`](https://man7.org/linux/man-pages/man7/epoll.7.html) or higher level mechanisms like event loop, e.g. [`libuv`](https://github.com/libuv/libuv).    
 
-### Async IO
+## Events, events are everywhere
+
+At the bottom of it, our toy distributed system would have to talk to other machines via some sort of [RPC](http://dist-prog-book.com/chapter/1/rpc.html).
+Sure, we could just grab an off-the-shelf RPC library and call it a day... but what's the fun then, right? In this post I want to poke right at the heart of efficient IO.
 
 ### Interface
 
-For this task, we won't be creating a fully functional event loop. Instead, we'll concentrate on a specific aspect of its functionality: the notification mechanism. You're given a `EventWatcher` class implementing this mechanism. It allows to `watch` on a file descriptor and call a `IWatchCallback` callback whenever file descriptor becomes ready for reading or writing.
+For this task, we won't be creating a fully functional event loop. Instead, we'll just focus on notification mechanism. Let's call it `EventWatcher`. It allows to `watch` on a file descriptor and call a `IWatchCallback` callback whenever file descriptor is ready to reading or writing.
 
-```c++
+```cpp
 class EventWatcher {
 public:
-    void watch(int fd, WatchFlag flag, IWatchCallback *ch);
-    void unwatch(int fd);
+    void watch(int fd, WatchFlag flag, IWatchCallbackPtr cb);
+    void unwatch(int fd, WatchFlag flag);
     void unwatchAll();
-    static EventWatcher &getInstance();
-private:
-    // Waiting for file to become ready for reading/writing and scheduling callback. 
-    void waitLoop();
 };
 ```
 
-The callback is called once fd (e.g. socket) becomes ready. 
+The callback is called once fd (e.g. socket) is ready for I/O. 
 
-```c++
+```cpp
 class IWatchCallback {
 public:
-    virtual void call(int fd) = 0;
+    virtual void run(int fd) = 0;
 };
 ```
 
-### Where to Schedule Callbacks?
+In the `/tasks/async-io` directory you'll find a half-baked implementation of `EventWatcher`. Feel free to tear it apart and change things however you like - but the main missing pieces are already called out with blocks like this:
 
-If a user-defined callback is scheduled on the same thread as the `waitLoop`, it can interfere with the loop logic impacting the overall performance. To address this, the `EventWatcher` allows specifying a thread pool in its constructor, which is used to run the main loop. This thread pool can also be utilized to execute user-provided callbacks.
+```cpp
+// ==== YOUR CODE: @0000 ====
+...
+// ==== END YOUR CODE ====
+```
 
-### Cancelling Wait
+### Flexing, multiplexing
 
-It's possible the `epoll_wait` will hang forever unless data appears in the fd being watched. This may be not desirable because it prevents newly added fd from being watched 'immediately' rather than after the current loop cycle.  Consider using [self pipe trick](https://cr.yp.to/docs/selfpipe.html) or timeout for epoll wait. *Which one is better and why?*
+The man page for [`man`](https://man7.org/linux/man-pages/man7/epoll.7.html) is great. It tells you what calls to use, all the ways you can shoot yourself in the leg, and even has code samples for the loop. 
+That’s basically what `EventWatcher::waitLoop` is supposed to be doing.
 
-### Synchronisation in Multi-Threaded Environment
+### Callbacks
 
-The epoll can detect fd being read / written in the callback as ready. This can result in data race unless proper synchronization is used inside user-defined callback structure. Think about ways to guarantee the callback are mutually exclusive for the same fd without requiring user-defined callback to synchronise access to fd.     
+So what happens after `epoll_wait` hands us a batch of ready file descriptors (maybe)? We grab each one, find its callback, and run it. But where? Inside the event loop thread itself, or offload to some thread pool?
+
+For pure IO, throwing it to another core usually doesn’t help and often just slows things down with extra context switching. But once we step into request handling, it’s a different story. 
+A typical server besides just reading and write bytes also parses the request, maybe talks to a database, maybe does some business logic, maybe kicks off more IO before replying. That’s the kind of work where offloading to a pool can actually pay off.
+
+### Handle watch / unwatch
+
+One gotcha: it's possible the `epoll_wait` will hang forever if no events come in. That means newly added fds won’t be picked up until the current wait cycle ends which, well, may not happen.
+In the pasts I used timeouts for that kind of stuff, but recently discovered [self pipe trick](https://cr.yp.to/docs/selfpipe.html).
 
 ### 🧠 Task
 
