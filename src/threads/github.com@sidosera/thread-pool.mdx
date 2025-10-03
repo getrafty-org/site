@@ -1,9 +1,11 @@
 ---
 layout: layout.jsx
+title: "Queuing Work"
+date: 2024-03-12
 ---
 
 
-# Basic primitives, Queues, Thread pools
+# Queuing Work
 
 This is an introductory task where we touch on the concept of thread pool, the core component for scheduling and executing work in our distributed file system. [Backend systems communicate by sending and receiving messages](https://en.wikipedia.org/wiki/Distributed_computing), upon receiving a message the system typically runs some work. Modern hardware trending to [scale](https://homepages.inf.ed.ac.uk/bgrot/pubs/SOP_ISCA12.pdf) much more through support of multiple cores rather than growing frequency of individual computation units. 
 

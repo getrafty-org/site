@@ -1,10 +1,29 @@
 import React from "https://esm.sh/react@18";
-import ReactDOM from "https://esm.sh/react-dom@18";
+import { createRoot, hydrateRoot } from "https://esm.sh/react-dom@18/client";
 import Counter from "./_components/Counter.jsx";
+import SearchIndex from "./_components/SearchIndex.jsx";
 
 const el = document.querySelector("[data-component='Counter']");
 if (el) {
-    ReactDOM.hydrateRoot(el, <Counter ssrCount={parseInt(el.dataset.ssrCount || "0", 10)} />);
+    hydrateRoot(el, <Counter ssrCount={parseInt(el.dataset.ssrCount || "0", 10)} />);
+}
+
+// Hydrate the SearchIndex on the homepage
+const searchEl = document.querySelector("[data-component='SearchIndex']");
+if (searchEl) {
+    const jsonEl = document.getElementById("index-posts");
+    let posts = [];
+    if (jsonEl) {
+        try {
+            posts = JSON.parse(jsonEl.textContent || "[]");
+        } catch (err) {
+            console.warn("Failed to parse index posts", err);
+        }
+    }
+    if (Array.isArray(posts) && posts.length > 0) {
+        const root = createRoot(searchEl);
+        root.render(<SearchIndex posts={posts} />);
+    }
 }
 
 export const themes = {
