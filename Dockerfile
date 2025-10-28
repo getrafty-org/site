@@ -1,27 +1,26 @@
-# Multi-stage build for Getrafty static site
-# Stage 1: Build the static site with Deno and Lume
-FROM denoland/deno:2.1.4 AS builder
+# Multi-stage build for Next.js static site
+# Stage 1: Build the static site with Node.js and Next.js
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy configuration files
-COPY deno.json deno.lock* ./
-COPY _config.js ./
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
 
 # Copy source files
-COPY src/ ./src/
-
-# Cache dependencies
-RUN deno cache --lock=deno.lock _config.js || deno cache _config.js
+COPY . .
 
 # Build the static site
-RUN deno task build
+RUN npm run build
 
 # Stage 2: Serve with nginx
 FROM nginx:1.27-alpine
 
 # Copy built static files from builder stage
-COPY --from=builder /app/_site /usr/share/nginx/html
+COPY --from=builder /app/out /usr/share/nginx/html
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
