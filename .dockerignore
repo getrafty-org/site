@@ -1,4 +1,4 @@
-_site
+out
 node_modules
 .git
 .github

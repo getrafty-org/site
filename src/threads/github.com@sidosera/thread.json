@@ -1,6 +1,0 @@
-{
-  "title": "Building Distributed Systems",
-  "started": "2024-01-15",
-  "tags": ["systems", "cpp", "distributed", "raft"],
-  "description": "Systems programming & distributed systems workbench. Build fully functional toy versions of distributed file systems, RPC frameworks, and explore async I/O."
-}

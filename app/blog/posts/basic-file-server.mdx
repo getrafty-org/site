@@ -1,0 +1,27 @@
+---
+title: "🚧 Basic File Server"
+publishedAt: "2024-07-16"
+summary: "Build a toy distributed filesystem using FUSE and VFS. Learn how to create custom filesystems without kernel modifications."
+---
+
+Until now, we've focused on foundational primitives required to build any backend system. While these concepts are essential, they alone don't provide a comprehensive understanding of how complex distributed backend systems function.
+To bridge this gap, we'll explore the construction of a toy distributed filesystem as a unifying example.
+To begin the conversation, let's consider how the high level interface of this system may look like.
+
+There are multiple options here - it could expose a web interface (e.g. Dropbox), be natively integrated to OS or both. This workbench is primarily focused on infrastructure systems, and thus it will focus on integrated approach.
+
+
+From the OS standpoint, filesystem is an abstraction providing read and write operations on top of storage hardware implementing/utilizing [Virtual Filesystem (VFS)](https://en.wikipedia.org/wiki/Virtual_file_system) interface. VFSes are adopted by popular operating systems like Linux, is particularly advantageous for our goal. Remarkably, it enables us to design our own filesystem without modifying the kernel, thanks to tools like [FUSE](https://en.wikipedia.org/wiki/Filesystem_in_Userspace).
+
+<Img
+    src="/static/img/fuse.png"
+    alt="Fuse"
+    caption={<a href="#">FUSE + VFS</a>}
+/>
+
+Exciting, isn't it? Our toy filesystem will leverage this approach, abstracting away the complexities of storage—whether it resides locally or is distributed across dozens, hundreds, or even thousands of nodes.
+
+
+## Node
+
+*Work in progress...*
