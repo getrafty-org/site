@@ -84,7 +84,6 @@ export default async function Blog(props: {
               '@id': `https://getrafty.org/blog/${post.slug}`,
             },
             inLanguage: 'en-US',
-            keywords: post.metadata.keywords || 'distributed systems, backend systems, c++ exercises',
           }),
         }}
       />

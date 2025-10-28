@@ -4,8 +4,6 @@ import type { Metadata } from 'next'
 import { Navbar } from './components/nav'
 import { ThemeProvider } from './components/theme-provider'
 import { baseUrl } from './config'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
 import { getBlogPosts } from './blog/utils'
 
 export const metadata: Metadata = {
