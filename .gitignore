@@ -10,10 +10,6 @@
 /.next/
 /out/
 
-# production
-/build
-/_site
-
 # misc
 .DS_Store
 *.pem
@@ -29,5 +25,3 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# vercel
-.vercel
