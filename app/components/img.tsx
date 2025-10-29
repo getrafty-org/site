@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, ReactNode } from 'react';
+import { useRef, useEffect, useState, ReactNode, CSSProperties } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ImgProps {
@@ -8,63 +8,64 @@ interface ImgProps {
   alt?: string;
   caption?: ReactNode;
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-function darkenImage(ctx: CanvasRenderingContext2D) {
-  const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-  const data = imageData.data;
-  const darkR = 13, darkG = 17, darkB = 23, whiteThreshold = 230;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-
-    if (brightness > whiteThreshold) {
-      data[i] = darkR;
-      data[i + 1] = darkG;
-      data[i + 2] = darkB;
-    } else {
-      data[i] = 255 - r;
-      data[i + 1] = 255 - g;
-      data[i + 2] = 255 - b;
+const applyInverseFilter = (ctx: CanvasRenderingContext2D): void => {
+  const buf = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  for (let i = 0; i < buf.data.length; i += 4) {
+    buf.data[i] = 255 - buf.data[i];
+    buf.data[i + 1] = 255 - buf.data[i + 1];
+    buf.data[i + 2] = 255 - buf.data[i + 2];
+    const f = 0.2126 * buf.data[i] + 0.7152 * buf.data[i + 1] + 0.0722 * buf.data[i + 2];
+    if (f < 50) {
+      buf.data[i + 3] = 0;
     }
   }
+  ctx.putImageData(buf, 0, 0);
+};
 
-  ctx.putImageData(imageData, 0, 0);
-}
 
-export default function Img({ src, alt = "", caption, className = "" }: ImgProps) {
+export default function Img({
+  src,
+  alt = '',
+  caption,
+  className = '',
+  width,
+  height
+}: ImgProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Handle client-side mounting
+  // Clien
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const isDark = mounted && theme === 'dark';
 
-  // Load image
   useEffect(() => {
-    if (!src) return;
+    if (!src) {
+      return;
+    }
 
     const img = new Image();
     img.src = src;
     imgRef.current = img;
 
-    img.onload = () => {
-      setIsLoaded(true);
-    };
+    img.onload = () => setIsLoaded(true);
+    img.onerror = (e) => console.error('[Img] Failed to load:', src, e);
 
-    img.onerror = (e) => {
-      console.error('[Img] Failed to load image:', src, e);
+    return () => {
+      img.onload = null;
+      img.onerror = null;
     };
   }, [src]);
 
-  // Draw on canvas when loaded or theme changes
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -73,7 +74,7 @@ export default function Img({ src, alt = "", caption, className = "" }: ImgProps
 
     if (!canvas || !img) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     canvas.width = img.naturalWidth;
@@ -83,18 +84,30 @@ export default function Img({ src, alt = "", caption, className = "" }: ImgProps
     ctx.drawImage(img, 0, 0);
 
     if (isDark) {
-      darkenImage(ctx);
+      applyInverseFilter(ctx);
     }
   }, [isDark, isLoaded]);
 
+  const canvasStyle: CSSProperties = {
+    aspectRatio: width && height ? `${width} / ${height}` : undefined,
+    background: !isLoaded ? 'var(--color-bg-secondary)' : undefined,
+  };
+
   return (
-    <figure className={className || "my-8"}>
+    <figure className={className || 'my-8'}>
       <canvas
         ref={canvasRef}
         className="rounded-lg w-full"
-        style={!isLoaded ? { minHeight: '200px', background: '#f5f5f5' } : undefined}
+        style={canvasStyle}
       />
-      {caption && <figcaption className="text-sm text-center text-gray-600 dark:text-gray-400 mt-2">{caption}</figcaption>}
+      {caption && (
+        <figcaption
+          className="text-sm text-center mt-2"
+          style={{ color: 'var(--color-dim)' }}
+        >
+          {caption}
+        </figcaption>
+      )}
     </figure>
   );
 }

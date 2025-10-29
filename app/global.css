@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './components/search.css';
 
 
 :root {
@@ -25,13 +26,13 @@
     --color-text: #a3adc2;
     --color-dim: #7585a3;
     --color-line: #29303d;
-    --color-background: #0d1117;
+    --color-background: rgb(13, 17, 23);
     --color-highlight: #1b1f28;
     --color-primary: var(--color-link);
     --color-primary-highlight: #f66f6f;
     --color-link: #8fc9ff;
     --anchor-tag-color: #28313f;
-    --gl-background-color-strong: #28313f;
+    --gl-background-color-strong: rgb(40, 49, 63);
     color-scheme: dark;
 }
 
@@ -237,181 +238,40 @@ blockquote {
     }
 
     .navbar-links {
-        @apply absolute md:fixed p-0 m-0 list-none;
+        @apply absolute p-0 m-0 list-none;
         @apply flex flex-wrap items-center font-semibold;
         @apply gap-6;
         z-index: 100;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 1025px) {
         .navbar-links {
+            position: fixed;
             top: 2rem;
         }
     }
 
-    /* Navbar center navigation */
-    .navbar-center {
-        @apply fixed left-1/2 transform -translate-x-1/2;
-        top: 2rem;
+    /* Right-aligned navbar links */
+    .navbar-links-right {
+        @apply absolute p-0 m-0 list-none;
+        @apply flex flex-wrap items-center font-semibold;
+        @apply gap-6;
+        right: min(5vw, 5rem);
         z-index: 100;
-        width: min(100% - 15vw, 45em);
-        max-width: 90vw;
     }
 
-    .nav-search-inline {
-        background: transparent !important;
-        border: none !important;
-        color: var(--color-base);
-        padding: 0.5rem;
-        font-size: 0.875rem;
-        outline: none !important;
-        box-shadow: none !important;
-        width: 100%;
-        opacity: 0;
-        transform: translateY(-3px);
-        pointer-events: none;
-        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .nav-search-inline:focus {
-        background: transparent !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    .nav-search-inline.visible {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
-
-    .nav-search-inline::placeholder {
-        color: var(--color-dim);
-        opacity: 0.5;
-    }
-
-    /* Solid background for navbar area */
-    .navbar-center-bg {
-        @apply fixed left-0 right-0 top-0;
-        height: calc(2rem + 2.5em);
-        background-color: var(--color-background);
-        z-index: 95;
-        pointer-events: none;
-        opacity: 1;
-        transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Hide solid navbar background when blur is active */
-    body:has(.nav-blur-overlay) .navbar-center-bg {
-        opacity: 0;
-    }
-
-    /* Blur overlay with dynamic gradient based on results */
-    .nav-blur-overlay {
-        @apply fixed inset-0;
-        z-index: 89;
-        pointer-events: auto;
-        background: linear-gradient(
-            to bottom,
-            var(--color-background) 0%,
-            var(--color-background) var(--gradient-start, calc(2rem + 2.5em + 1rem)),
-            rgba(255, 255, 255, 0.8) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 5rem),
-            rgba(255, 255, 255, 0.5) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 12rem),
-            rgba(255, 255, 255, 0.2) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 22rem),
-            transparent calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 37rem)
-        );
-        opacity: 0;
-        animation: fadeInOverlay 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        transition: background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes fadeInOverlay {
-        to {
-            opacity: 1;
+    @media (min-width: 1025px) {
+        .navbar-links-right {
+            position: fixed;
+            top: 2rem;
         }
     }
 
-    [data-theme="dark"] .nav-blur-overlay {
-        background: linear-gradient(
-            to bottom,
-            var(--color-background) 0%,
-            var(--color-background) var(--gradient-start, calc(2rem + 2.5em + 1rem)),
-            rgba(13, 17, 23, 0.8) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 5rem),
-            rgba(13, 17, 23, 0.5) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 12rem),
-            rgba(13, 17, 23, 0.2) calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 22rem),
-            transparent calc(var(--gradient-start, calc(2rem + 2.5em + 1rem)) + 37rem)
-        );
-    }
-
-    body:has(.nav-blur-overlay) main {
-        filter: blur(100px);
-        transition: filter 0.1s cubic-bezier(0.42, 0, 1, 1);
-    }
-
-    main {
-        transition: filter 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
-    }
-
-    .nav-results-container {
-        @apply fixed left-1/2;
-        transform: translateX(-50%) translateY(-5px);
-        top: calc(2rem + 2.5em + 0.5rem);
-        width: min(100% - 15vw, 45em);
-        max-width: 90vw;
-        max-height: 50vh;
-        padding: 1rem;
-        z-index: 100;
-        overflow-y: auto;
-        overflow-x: hidden;
-        background: transparent;
-        opacity: 0;
-        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.08s,
-                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.08s;
-        animation: slideInResults 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.08s forwards;
-    }
-
-    @keyframes slideInResults {
-        to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+    /* Hide mobile search button on desktop */
+    @media (min-width: 1025px) {
+        .mobile-search-button {
+            display: none;
         }
-    }
-
-    .nav-search-results {
-        @apply list-none p-0 m-0;
-        @apply flex flex-col gap-2;
-    }
-
-    .nav-search-results li {
-        @apply m-0;
-    }
-
-    .nav-search-results a {
-        @apply block no-underline;
-        color: var(--color-dim) !important;
-        font-size: 1rem;
-        /* font-weight: 500; */
-        background: transparent;
-        transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 0.1rem 0;
-        margin: 0;
-        opacity: 0.9;
-    }
-
-    .nav-search-results a:hover,
-    .nav-search-results a.selected {
-        /* opacity: 10; */
-        color: var(--color-primary) !important;
-        /* font-weight: 500; */
-    }
-
-    .nav-no-results {
-        @apply py-2 m-0;
-        color: var(--color-dim);
-        font-size: 0.875rem;
-        background: transparent;
     }
 }
 

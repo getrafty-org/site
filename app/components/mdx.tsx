@@ -4,6 +4,7 @@ import { MDXRemote } from 'next-mdx-remote/rsc'
 import React from 'react'
 import Img from './img'
 import rehypePrism from '@mapbox/rehype-prism'
+import { getImageSize } from '../lib/image-size'
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -49,6 +50,11 @@ function RoundedImage(props) {
   return <Image alt={props.alt} className="rounded-lg" {...props} />
 }
 
+function ImgWithDimensions(props) {
+  const dimensions = getImageSize(props.src)
+  return <Img {...props} width={dimensions?.width} height={dimensions?.height}/>
+}
+
 function slugify(str) {
   return str
     .toString()
@@ -90,7 +96,7 @@ let components = {
   h5: createHeading(5),
   h6: createHeading(6),
   Image: RoundedImage,
-  Img,
+  Img: ImgWithDimensions,
   a: CustomLink,
   Table,
 }
