@@ -6,6 +6,11 @@ import { useSearch } from './hooks/use-search'
 import { SearchOverlay } from './search-overlay'
 import { gitUrl } from 'app/config'
 
+import IconMagic from '@/icomoon/magic.svg'
+import IconSearch from '@/icomoon/search.svg'
+import IconGit from '@/icomoon/github.svg'
+
+
 interface Post {
   slug: string
   metadata: {
@@ -19,7 +24,7 @@ interface NavbarProps {
   posts?: Post[]
 }
 
-const hoverOpenDelayMs = 100
+const hoverOpenDelayMs = 200
 
 export function Navbar({ posts = [] }: NavbarProps) {
   const { theme, setTheme } = useTheme()
@@ -47,20 +52,18 @@ export function Navbar({ posts = [] }: NavbarProps) {
       <nav className="navbar">
         <ul className="navbar-links">
           <li>
-            <button className="button theme-toggle">
-              <a className="icon icon-magic" aria-hidden="true"></a>
+            <button className="button theme-toggle" aria-label="Toggle theme">
+              <IconMagic className="icon" aria-hidden="true" focusable="false" />
             </button>
           </li>
           <li>
-            <button className="button">
-              <a
-                className="icon icon-github"
-                aria-hidden="true"
-                href={gitUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              ></a>
-            </button>
+            <a
+              className="button"
+              href={gitUrl}
+              target="_blank"
+            >
+              <IconGit className="icon" aria-hidden="true" focusable="false" />
+            </a>
           </li>
         </ul>
       </nav>
@@ -102,20 +105,23 @@ export function Navbar({ posts = [] }: NavbarProps) {
     <nav className="navbar">
       <ul className="navbar-links">
         <li>
-          <button className="button theme-toggle" onClick={toggleTheme}>
-            <a className="icon icon-magic" aria-hidden="true"></a>
+          <button
+            className="button theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            <IconMagic className="icon" aria-hidden="true" focusable="false" />
           </button>
         </li>
         <li>
-          <button className="button">
-            <a
-              className="icon icon-github"
-              aria-hidden="true"
-              href="https://github.com/getrafty-org/getrafty"
-              target="_blank"
-              rel="noopener noreferrer"
-            ></a>
-          </button>
+          <a
+            className="button"
+            href={gitUrl}
+            target="_blank"
+          >
+            <IconGit className="icon" aria-hidden="true" focusable="false" />
+          </a>
+
         </li>
       </ul>
 
@@ -126,7 +132,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
             onClick={search.open}
             aria-label="Search"
           >
-            <a className="icon icon-search" aria-hidden="true"></a>
+            <IconSearch className="icon" aria-hidden="true" focusable="false" />
           </button>
         </li>
       </ul>

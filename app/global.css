@@ -56,15 +56,6 @@ body {
     position: relative;
 }
 
-a:not(.icon) {
-    color: var(--color-link);
-    text-decoration: none;
-}
-
-a:not(.icon):hover {
-    color: var(--color-link-hover);
-}
-
 /* Main content area */
 main {
     padding: 0;
@@ -197,16 +188,32 @@ blockquote {
 @layer components {
     /* Icon styles */
     .icon {
-        @apply inline-flex items-center justify-center;
-        @apply text-2xl h-6 w-6 leading-none;
+        @apply inline-flex items-center justify-center text-2xl h-6 w-6 leading-none transition-colors duration-200;
+        color: inherit;
+        shape-rendering: geometricPrecision;
     }
 
-    a.icon {
-        @apply text-[#a3adc2] hover:text-current;
+    .navbar .button {
+        --color: #a3adc2;
+        /* --color-hover: #a3adc2; */
     }
 
-    [data-theme="dark"] a.icon {
-        @apply text-[#747474];
+
+    .navbar .button .icon {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .navbar .button .icon {
+        fill: currentColor;
+    }
+
+    .navbar .button:focus-visible .icon {
+        color: var(--color-hover);
+    }
+
+    .navbar .button:hover .icon {
+        color: var(--color-hover);
     }
 
     /* Button styles */
@@ -370,4 +377,3 @@ pre {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-

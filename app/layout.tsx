@@ -57,7 +57,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="stylesheet" href="/static/icomoon.css" />
         <link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml" />
         <link rel="icon" href="/static/img/mascot-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)" />
         <link rel="icon" href="/static/img/mascot-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
