@@ -1,9 +1,10 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearch } from './hooks/use-search'
 import { SearchOverlay } from './search-overlay'
+import { gitUrl } from 'app/config'
 
 interface Post {
   slug: string
@@ -18,14 +19,23 @@ interface NavbarProps {
   posts?: Post[]
 }
 
+const hoverOpenDelayMs = 100
+
 export function Navbar({ posts = [] }: NavbarProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const hoverOpenTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const search = useSearch({ posts })
 
   useEffect(() => {
     setMounted(true)
+
+    return () => {
+      if (hoverOpenTimeoutRef.current) {
+        clearTimeout(hoverOpenTimeoutRef.current)
+      }
+    }
   }, [])
 
   const toggleTheme = () => {
@@ -46,7 +56,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
               <a
                 className="icon icon-github"
                 aria-hidden="true"
-                href="https://github.com/getrafty-org/getrafty"
+                href={gitUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               ></a>
@@ -57,9 +67,39 @@ export function Navbar({ posts = [] }: NavbarProps) {
     )
   }
 
+  const cancelHoverOpen = () => {
+    if (hoverOpenTimeoutRef.current) {
+      clearTimeout(hoverOpenTimeoutRef.current)
+      hoverOpenTimeoutRef.current = null
+    }
+  }
+
+  const handleMouseEnter = () => {
+    if (search.isOpen || hoverOpenTimeoutRef.current) {
+      return
+    }
+
+    hoverOpenTimeoutRef.current = setTimeout(() => {
+      hoverOpenTimeoutRef.current = null
+      search.open()
+    }, hoverOpenDelayMs)
+  }
+
+  const handleMouseLeave = () => {
+    cancelHoverOpen()
+
+    if (!search.query) {
+      search.close()
+    }
+  }
+
+  const handleFocus = () => {
+    cancelHoverOpen()
+    search.open()
+  }
+
   return (
     <nav className="navbar">
-      {/* Left-aligned navigation buttons */}
       <ul className="navbar-links">
         <li>
           <button className="button theme-toggle" onClick={toggleTheme}>
@@ -79,7 +119,6 @@ export function Navbar({ posts = [] }: NavbarProps) {
         </li>
       </ul>
 
-      {/* Right-aligned mobile search button */}
       <ul className="navbar-links-right">
         <li>
           <button
@@ -92,15 +131,10 @@ export function Navbar({ posts = [] }: NavbarProps) {
         </li>
       </ul>
 
-      {/* Desktop inline search */}
       <div
         className="navbar-center desktop-search"
-        onMouseEnter={search.open}
-        onMouseLeave={() => {
-          if (!search.query) {
-            search.close()
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <input
           type="search"
@@ -109,12 +143,11 @@ export function Navbar({ posts = [] }: NavbarProps) {
           value={search.query}
           onChange={(e) => search.setQuery(e.target.value)}
           onKeyDown={search.handleKeyDown}
-          onFocus={search.open}
+          onFocus={handleFocus}
           autoComplete="off"
         />
       </div>
 
-      {/* Mobile search input */}
       {search.isOpen && (
         <div className="mobile-search-container">
           <input
@@ -130,7 +163,6 @@ export function Navbar({ posts = [] }: NavbarProps) {
         </div>
       )}
 
-      {/* Search overlay with results and blur effect */}
       <SearchOverlay
         isOpen={search.isOpen}
         query={search.query}

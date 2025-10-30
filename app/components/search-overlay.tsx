@@ -32,15 +32,10 @@ export function SearchOverlay({
 
   return (
     <>
-      {/* Solid navbar background when search is active */}
       <div className="navbar-center-bg" />
 
-      {/* Search results displayed on top of blurred background */}
       {query && (
-        <div
-          className="nav-results-container"
-          onMouseLeave={onClose}
-        >
+        <div className="nav-results-container">
           <SearchResults
             posts={filteredPosts}
             selectedIndex={selectedIndex}
@@ -50,7 +45,6 @@ export function SearchOverlay({
         </div>
       )}
 
-      {/* Blur overlay with gradient - click anywhere to close */}
       <div
         className="nav-blur-overlay"
         style={{
