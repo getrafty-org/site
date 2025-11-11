@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react'
-
-interface Post {
-  slug: string
-  metadata: {
-    title: string
-    publishedAt: string
-    summary: string
-  }
-}
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { filterPostsByQuery, type BlogPost } from 'app/blog/post-helpers'
 
 interface UseSearchOptions {
-  posts: Post[]
+  posts: BlogPost[]
   onToggle?: (isOpen: boolean) => void
 }
 
@@ -18,21 +11,39 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const inputRefs = useRef<Set<HTMLInputElement>>(new Set())
 
-  // Filter posts based on search query
-  const filteredPosts = query.trim()
-    ? posts.filter((post) => {
-        const q = query.toLowerCase()
-        const title = post.metadata.title.toLowerCase()
-        const summary = (post.metadata.summary || '').toLowerCase()
-        return title.includes(q) || summary.includes(q)
-      })
-    : []
+  const focusInputs = useCallback(() => {
+    const first = inputRefs.current.values().next().value
+    first?.focus()
+  }, [])
 
-  // Reset selected index when results change
+  const blurInputs = useCallback(() => {
+    inputRefs.current.forEach((input) => input.blur())
+  }, [])
+
+  const createInputBinder = useCallback(() => {
+    let current: HTMLInputElement | null = null
+
+    return (node: HTMLInputElement | null) => {
+      if (current) {
+        inputRefs.current.delete(current)
+      }
+      if (node) {
+        inputRefs.current.add(node)
+      }
+      current = node
+    }
+  }, [])
+
+  const filteredPosts = useMemo(() => {
+    return query.trim() ? filterPostsByQuery(posts, query) : []
+  }, [posts, query])
+
+  // Reset selection whenever the search input or results change
   useEffect(() => {
     setSelectedIndex(0)
-  }, [query])
+  }, [query, filteredPosts.length])
 
   // Prevent body scroll when search is active
   useEffect(() => {
@@ -53,11 +64,7 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
       if (e.key === 'Escape') {
         setIsOpen(false)
         setQuery('')
-        // Remove focus from search input
-        const searchInput = document.querySelector('.nav-search-inline, .mobile-search-input') as HTMLInputElement
-        if (searchInput) {
-          searchInput.blur()
-        }
+        blurInputs()
         return
       }
 
@@ -83,15 +90,12 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
 
       // Show search and focus input on any key press
       setIsOpen(true)
-      const searchInput = document.querySelector('.nav-search-inline') as HTMLInputElement
-      if (searchInput) {
-        searchInput.focus()
-      }
+      focusInputs()
     }
 
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [])
+  }, [blurInputs, focusInputs])
 
   // Notify when search opens/closes
   useEffect(() => {
@@ -102,19 +106,22 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
     setIsOpen(true)
     // Focus search input after a short delay
     setTimeout(() => {
-      const searchInput = document.querySelector('.nav-search-inline, .mobile-search-input') as HTMLInputElement
-      if (searchInput) {
-        searchInput.focus()
-      }
+      focusInputs()
     }, 100)
   }
 
   const close = () => {
     setIsOpen(false)
     setQuery('')
+    blurInputs()
+    setSelectedIndex(0)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
+  }
+
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown' && filteredPosts.length) {
       e.preventDefault()
       setSelectedIndex((prev) => (prev + 1) % filteredPosts.length)
@@ -130,12 +137,16 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
   return {
     isOpen,
     query,
-    setQuery,
     filteredPosts,
     selectedIndex,
     setSelectedIndex,
     open,
     close,
-    handleKeyDown,
+    inputBindings: {
+      value: query,
+      onChange: handleQueryChange,
+      onKeyDown: handleKeyDown,
+    },
+    createInputBinder,
   }
 }

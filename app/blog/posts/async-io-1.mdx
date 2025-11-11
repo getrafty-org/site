@@ -1,0 +1,69 @@
+---
+title: "Async I/O - Reactor"
+publishedAt: "2025-09-10"
+summary: "Network IO, epoll, event loops. Learn how servers efficiently handle thousands of connections without blocking threads."
+prev: "queue-1"
+next: "async-io-2"
+---
+
+When you look at servers under a microscope, most of what they do is just move bytes around.
+Read some data, write some data, wait for more. Boring stuff. That is exactly what BarkFS needs.
+
+At the OS level, BarkFS talks to the world by issuing [syscalls](https://man7.org/linux/man-pages/man2/intro.2.html) 
+like [`read`](https://man7.org/linux/man-pages/man2/read.2.html) and [`write`](https://man7.org/linux/man-pages/man2/write.2.html).  
+The catch is that these calls normally block until the operation completes.
+
+A common workaround is to move blocking I/O onto separate threads.
+This works, and historically many systems did exactly that, for example Java before [Loom](https://openjdk.org/jeps/425).
+Threads aren't free though, they take memory for stacks, CPU for scheduler overhead, and context-switching time. 
+And with growing number of connections we hit limits fast. In other words, it doesn't scale well.
+
+Most of the efficient networking libraries out there use asynchronous I/O. 
+That's where event reactor pattern comes in. We'll use our MPSC queue to feed work into reactor.
+This is the same structure behind Nginx, libuv, Tokio, and pretty much every high-performance networking stack.
+
+## Reactor
+
+For this task, we won't be creating a fully functional event loop. Instead, we'll just focus on notification mechanism. Let's call it `EventWatcher`. 
+It allows to `watch` on a file descriptor and call a `WatchCallback` whenever file descriptor is ready.
+
+```cpp
+class EventWatcher {
+public:
+    void watch(int fd, WatchFlag flag, IWatchCallbackPtr cb);
+    void unwatch(int fd, WatchFlag flag);
+    void unwatchAll();
+    void runInEventWatcherLoop(WatchCallback task);
+};
+```
+
+The callback is called once fd (e.g. socket) is ready for I/O.
+
+The [man](https://man7.org/linux/man-pages/man7/epoll.7.html) page for epoll is great. It tells you what calls to use, all the ways you can shoot yourself in the leg, and even has code samples for the loop.
+That's basically what `EventWatcher::waitLoop` is supposed to be doing.
+
+**Callbacks**
+
+So what happens after `epoll_wait` hands us a batch of ready file descriptors (maybe)? 
+We grab each one, find its callback, and run it.
+But where? Inside the event loop thread itself, or offload to some thread pool?
+
+For pure IO, throwing it to another core usually doesn't help and often just slows things down with extra context switching. 
+But once we step into request handling, it's a different story.
+A typical server besides just reading and write bytes also parses the request, 
+maybe talks to a database, maybe does some business logic, maybe kicks off more IO before replying. 
+That's the kind of work where offloading to a pool can actually pay off.
+
+**Watch & Unwatch**
+
+It's possible the `epoll_wait` will hang forever if no events come in. 
+That means newly added fds won't be picked up until the current wait cycle ends which, well, may not happen.
+How would you solve that?
+
+## 🧠 Task
+
+Your task is to implement `waitLoop` method of the [`EventWatcher`](https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher.hpp) class using [`epoll_wait`](https://man7.org/linux/man-pages/man2/epoll_wait.2.html#top_of_page).
+
+## 📦 Build & Test
+
+Tests are located in [`event_watcher_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/rpc-io/event_watcher_test.cpp).

@@ -1,7 +1,8 @@
 ---
-title: "Queuing Work"
-publishedAt: "2024-03-12"
+title: "Thread Pools"
+publishedAt: "2024-03-10"
 summary: "Learn about thread pools, the core component for scheduling work in distributed systems. Implement MPMC queues and efficient thread management in C++."
+prev: "tutorial"
 --- 
 
 This is an introductory task where we touch on the concept of thread pool, the core component for scheduling and executing work in our distributed file system. [Backend systems communicate by sending and receiving messages](https://en.wikipedia.org/wiki/Distributed_computing), upon receiving a message the system typically runs some work. Modern hardware trending to [scale](https://homepages.inf.ed.ac.uk/bgrot/pubs/SOP_ISCA12.pdf) much more through support of multiple cores rather than growing frequency of individual computation units.
@@ -73,6 +74,10 @@ The thread pool will rely on [`UnboundedBlockingQueue`](https://github.com/getra
 * Implement `ThreadPool` class.
 
 
-## Verification
+## 📦 Build & Test
 
 Tests are located in [`thread_pool_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/thread-pool/thread_pool_test.cpp)
+
+```shell
+~/workspace$ tasklet test thread-pool
+```

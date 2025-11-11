@@ -2,9 +2,47 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import React from 'react'
-import Img from './img'
 import rehypePrism from '@mapbox/rehype-prism'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-bash'
+import Img from './img'
 import { getImageSize } from '../lib/image-size'
+
+if (typeof globalThis !== 'undefined' && !(globalThis as any).Prism) {
+  ;(globalThis as any).Prism = Prism
+}
+
+const extraShellCommands = [
+  'tasklet',
+  'ctest',
+  'cmake',
+  'ninja',
+  'clang',
+  'clang++',
+  'gcc',
+  'g++',
+  'lldb',
+  'valgrind',
+  'meson',
+]
+
+const escapedCommands = extraShellCommands.map((cmd) =>
+  cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+)
+
+const customCommandPattern = new RegExp(
+  `(^|[\\s;|&]|[<>]\\()(?:${escapedCommands.join('|')})(?=$|[)\\s;|&])`
+)
+
+if (!Prism.languages.bash['course-command']) {
+  Prism.languages.insertBefore('bash', 'function', {
+    'course-command': {
+      pattern: customCommandPattern,
+      lookbehind: true,
+      alias: 'function',
+    },
+  })
+}
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -101,6 +139,47 @@ let components = {
   Table,
 }
 
+function withCodeLanguageAliases() {
+  const aliasClass = (className: string) => {
+    if (!className) {
+      return className
+    }
+    switch (className) {
+      case 'language-shell':
+      case 'language-sh':
+      case 'language-zsh':
+      case 'language-shellsession':
+        return 'language-bash'
+      default:
+        return className
+    }
+  }
+
+  return (tree: any) => {
+    const visit = (node: any) => {
+      if (!node || typeof node !== 'object') {
+        return
+      }
+
+      if (node.properties) {
+        if (Array.isArray(node.properties.className)) {
+          node.properties.className = node.properties.className.map(aliasClass)
+        }
+
+        if (typeof node.properties['data-language'] === 'string') {
+          node.properties['data-language'] = aliasClass(node.properties['data-language'])
+        }
+      }
+
+      if (Array.isArray(node.children)) {
+        node.children.forEach(visit)
+      }
+    }
+
+    visit(tree)
+  }
+}
+
 export function CustomMDX(props) {
   return (
     <MDXRemote
@@ -108,7 +187,7 @@ export function CustomMDX(props) {
       components={{ ...components, ...(props.components || {}) }}
       options={{
         mdxOptions: {
-          rehypePlugins: [rehypePrism],
+          rehypePlugins: [withCodeLanguageAliases, rehypePrism],
         },
       }}
     />

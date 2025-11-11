@@ -1,14 +1,17 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CustomMDX } from 'app/components/mdx'
+import Link from 'next/link'
 import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { Footer } from 'app/components/footer'
 
-export async function generateStaticParams() {
-  let posts = getBlogPosts()
+export const dynamicParams = false
+
+export function generateStaticParams() {
+  const posts = getBlogPosts()
 
   return posts.map((post) => ({
-    slug: post.slug,
+    slug: String(post.slug),
   }))
 }
 
@@ -49,11 +52,36 @@ export default async function Blog(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  let post = getBlogPosts().find((post) => post.slug === params.slug)
+  const posts = getBlogPosts()
+  const post = posts.find((item) => item.slug === params.slug)
 
   if (!post) {
     notFound()
   }
+
+  const previousPost = post.metadata.prev
+    ? posts.find((item) => item.slug === post.metadata.prev)
+    : undefined
+  const nextPost = post.metadata.next
+    ? posts.find((item) => item.slug === post.metadata.next)
+    : undefined
+
+  const backLink = previousPost
+    ? {
+      href: `/blog/${previousPost.slug}`,
+      label: previousPost.metadata.title,
+    }
+    : {
+      href: '/',
+      label: 'Home',
+    }
+
+  const nextLink = nextPost &&
+  {
+    href: `/blog/${nextPost.slug}`,
+    label: nextPost.metadata.title,
+  }
+
 
   return (
     <section>
@@ -98,7 +126,32 @@ export default async function Blog(props: {
       <article className="prose" style={{ color: 'var(--color-text)' }}>
         <CustomMDX source={post.content} />
       </article>
-      <Footer year={new Date(post.metadata.publishedAt).getFullYear()} />
+      <nav
+        className="mt-12"
+        style={{ borderTop: '1px solid var(--color-line)', paddingTop: '1.5rem' }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+          <Link
+            href={backLink.href}
+            className="flex items-center gap-2 leading-snug"
+            style={{ color: 'var(--color-link)' }}
+          >
+            <span aria-hidden>←</span>
+            <span>{backLink.label}</span>
+          </Link>
+
+          {nextLink && <Link
+            href={nextLink.href}
+            className="flex items-center gap-2 leading-snug ml-auto text-right justify-end"
+            style={{ color: 'var(--color-link)' }}
+          >
+            <span>{nextLink.label}</span>
+            <span aria-hidden>→</span>
+          </Link>}
+
+        </div>
+      </nav>
+      <Footer />
     </section>
   )
 }

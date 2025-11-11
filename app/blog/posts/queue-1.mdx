@@ -1,0 +1,129 @@
+---
+title: "Epilogue"
+publishedAt: "2024-03-12"
+summary: "Implement MPSC queues in C++."
+prev: "tutorial"
+next: "async-io-1"
+---
+
+So say we want to build a fully functional toy distributed system for fun and profit. Let's call it BarkFS.
+How do we start?
+
+The goal here is to explore the fundamental building blocks that show up in actual production systems.
+So we'll skip everything that isn't essential and focus on the core pieces.
+
+A distributed file system isn't that different from the local filesystem on your laptop.
+It has files, directories, can respond to `ls`, `stat` or `cat`.
+The difference is that BarkFS will run across multiple machines, and will be able to scale by adding more of them.
+
+We'll expose BarkFS through a normal filesystem interface, so any program could use it.
+In theory, you could even run MySQL on top of it and call it a "distributed SQL database"
+(which would technically be true and practically terrible - but fun to think about).
+
+## Talking Machines
+
+At its core, BarkFS is just machines exchanging messages over the network and agreeing on what the filesystem looks like.
+But before we get to replication and consensus, we need something simpler: 
+the ability for different parts of the system to send "work" to each other.
+
+Even within a single machine, BarkFS will have multiple components passing tasks around.
+This is the classic [producer-consumer problem](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem).
+
+So we need a queue.
+
+A queue is just a [FIFO data structure](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)) - first in, first out:
+
+```cpp
+std::queue<Task> q;
+q.push(task);
+auto t = q.pop();
+```
+
+This is fine as long as only one thread is touching it.
+But as soon as multiple threads start calling `push` or `pop`, you get data races and memory corruption.
+Most real systems are multi-threaded, so we need a safe way to pass work between threads.
+
+The simplest fix is to put a mutex around the queue. But is is good enough?
+Well, maybe, often yes. But this is not the right question to ask. 
+The question we should ask ourselves is is it good enough for a *particular use case* we care about here?
+
+This is a very common pattern in systems programming especially the one that has to do with I/O is 
+when there're multiple parties producing the work and the single worker executing the work. 
+Think of event Loops, logging, task schedulers, DMA / IO completion handling. 
+For our BarkFS's networking module we would need an event loop to schedule and execute I/O work.
+
+Which leads us to a queue designed exactly for this case.
+
+## MPSC Queue
+
+Multi-Producer/Single-Consumer queue allows multiple threads to push tasks in, while one thread pops them out.
+Because the consumer is the only one removing items, it never needs to coordinate with anyone else.
+The push side is where contention happens, and we can keep that path simple and fast.
+
+This makes the queue efficient, predictable, and a good fit for the kind of systems we're building.
+
+## Interface
+
+Our queue needs just two operations:
+
+```cpp
+template <typename T>
+class Queue {
+public:
+void push(T value);          // Multiple threads call this
+std::optional<T> tryTake();  // Only one thread calls this
+};
+```
+
+The `push` adds work while `tryTake` returns work.
+No blocking. The consumer decides how to wait if queue is empty and returns `std::nullopt`.
+
+## 🧠 Task
+
+In [tasks/mpsc_queue/queue.hpp](https://github.com/getrafty-org/getrafty/blob/main/tasks/mpsc_queue/queue.hpp), you'll find a `Queue` class with some gaps:
+
+```cpp
+void push(T value) {
+// ==== YOUR CODE: @b270 ====
+
+// ==== END YOUR CODE ====
+}
+
+std::optional<T> tryTake() {
+// ==== YOUR CODE: @48dd ====
+
+// ==== END YOUR CODE ====
+}
+```
+
+## 📦 Build & Test
+
+Tests are in `queue_test.cpp`:
+
+```shell
+~/$ ./tasklet test mpsc_queue
+```
+
+There's also a benchmark if you're curious about performance (optional):
+
+```shell
+~/$ ./tasklet bench mpsc_queue
+```
+
+To give you a rough baseline, on my machine with my own rough implementation 
+I was able to achieve around ~15ns mean e2e latency.
+
+```shell
+~/$ lscpu
+Architecture:                x86_64
+    CPU op-mode(s):          32-bit, 64-bit
+CPU(s):                      8
+    Thread(s) per core:      2
+    Core(s) per socket:      4
+    CPU max MHz:             4200.0000
+```
+
+## What's Next?
+
+Once we have a working queue, we'll use it to build an event loop to power BarkFS networking module.
+

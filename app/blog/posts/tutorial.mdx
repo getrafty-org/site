@@ -1,0 +1,84 @@
+---
+title: "Tutorial"
+publishedAt: "2025-11-04"
+summary: "Tutorial"
+prev: "about"
+next: "queue-1"
+---
+
+This tutorial is a quick walkthrough for getting the code used in Getrafty articles up and running.
+
+## Getting The Code
+
+To work with the code make a private fork of [getrafty-org/getrafty](https://github.com/getrafty-org/getrafty.git) and clone it:
+
+```shell
+~/$ git clone git@github.com:<username>/getrafty.git
+```
+
+Getrafty comes with `Dockerfile` so you don't need to install compilers and toolchains on your machine. 
+Any Docker compatible container runtime should work. 
+Also, Getrafty's got a handy command line tool that does all the heavy lifting. 
+For example, to boot a container with an open `3333` ssh port:
+
+```shell
+~/$ ./tasklet boot
+```
+
+Then to connect: 
+
+```shell
+~/$ ssh ubuntu@localhost -p 3333 
+```
+
+Or simply:
+
+```shell
+~/$ ./tasklet attach
+```
+
+## 🧠 Task
+
+Have you ever watched BTTF since fiction movie? It introduces famous car by DeLorean Motor Company that is capable of traveling in time. 
+
+According to the plot, the vehicle integrated with so-called [flux capacitor](https://en.wikipedia.org/wiki/DeLorean_time_machine#Operation) needed to reach certain speed before capacitor let the sport car to break time barrier.
+
+This task is about completing the method `FluxCapacitor::computeTimeBarrierBreakSpeed` in [`flux_capacitor.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/tutorial/flux_capacitor.cpp).
+
+```cpp
+// flux_capacitor.cpp:
+Speed FluxCapacitor::computeTimeBarrierBreakSpeed() {
+    ...
+};
+```
+
+The method returns a minimum speed in mph needed to [activate the flux capacitor](https://en.wikipedia.org/wiki/DeLorean_time_machine#Operation).
+
+## 📦 Build & Test
+
+Getrafty's C++ modules are built with [CMake](https://cmake.org/cmake). Tests usually live next to the source files, for example: [`flux_capacitor.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/tutorial/flux_capacitor_test.cpp). 
+
+You can run tests directly through the CMake toolchain using any of [pre-configured profiles](https://github.com/getrafty-org/getrafty/blob/main/cmake-variants.yaml) or using `tasklet` CLI.
+
+To get the list of all exercises:
+```shell
+~/$ ./tasklet list
+
+tutorial
+...
+```
+
+To run tests for every build profile right out of the box:
+
+```shell
+~/$ ./tasklet test tutorial
+
+OK all tests passed
+```
+
+If the test command prints OK, most likely everything works as expected.
+
+## Getting Help
+
+If you run into something weird, you're not alone.
+Ask questions or report issues on [GitHub](https://github.com/orgs/getrafty-org/discussions).

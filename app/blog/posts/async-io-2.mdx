@@ -1,0 +1,184 @@
+---
+title: "Async I/O - Sockets"
+publishedAt: "2025-09-11"
+summary: "Build reliable message transport over TCP. Learn about framing, buffering, and handling partial reads/writes."
+prev: "async-io-1"
+next: "thread-pool"
+---
+
+Alright, so we've got an event loop that can run callbacks once resources get ready. 
+That sounds too far from our original goal of being able to "talk" to a remote machine doesn't it? 
+Bear with me. I promise this will makes sense once we outline another corner pice of BarkFS's networking stack.
+
+
+## What is I/O?
+
+"IO" can mean a lot of different things - reading from disk, sending bytes over the network, or say talking to hardware through [DMA](https://en.wikipedia.org/wiki/Direct_memory_access). Since we're focused on distributed systems, the piece we care about most is network IO.
+Fundamental job of OS is to provide abstractions over hardware devices for us programmers to efficiently use them. 
+For network devices this abstraction is [sockets](https://en.wikipedia.org/wiki/Berkeley_sockets). Hello from 80s. 
+A socket is basically the OS handing you a handle and saying: *"use this to send bytes out"*. Every major operating system has this concept.
+
+Now, sockets can work in blocking [mode](https://man7.org/linux/man-pages/man7/socket.7.html), 
+where a thread waits until data shows up, or in non-blocking mode, where call to a syscall returns immediately 
+no matter whether it has data or not. 
+
+You may ask why would anyone use blocking mode then then given there's a shiny nonblocking one? 
+Blocking mode is simpler to reason about and works fine when you only have a few connections.
+But once you have many connections, blocking mode wastes time and threads waiting on IO.
+
+We will build BarkFS's networking stack on top of nonblocking sockets and here is where reactor we built earlier comes into play.
+
+## Building a communication library
+
+What we're building here is the foundation of a distributed system. Think about what Raft nodes need to do - they send messages to each other constantly. Vote requests, log replication, heartbeats. Each message needs to arrive intact, in order, without corruption.
+
+You could use an existing RPC framework - [gRPC](https://grpc.io/), [Thrift](https://thrift.apache.org/), [Cap'n Proto](https://capnproto.org/). They all solve this problem. But they also bring a lot of baggage - code generation, complex build systems, opinions about serialization. For learning, it's better to build from first principles.
+
+A communication library typically has these pieces:
+
+1. **Transport layer**: Handles raw socket I/O, connection management, error handling
+2. **Framing layer**: Turns byte streams into messages with boundaries
+3. **Codec layer**: Serialization/deserialization of your data structures
+4. **RPC layer**: Request/response matching, timeouts, error propagation
+
+Today we're focused on pieces 1 and 2. Getting bytes onto the wire reliably, and recovering structured messages on the other end.
+
+## Framing strategies
+
+The gap between "stream of bytes" and "stream of messages" is called framing. Every network protocol needs to solve this. Here are the common approaches:
+
+- **Length prefixing**: Start each message with its size (4 bytes, usually). Read the size, then read exactly that many bytes. Repeat. Used by [gRPC](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md), [Thrift](https://github.com/apache/thrift/blob/master/doc/specs/thrift-rpc.md), and most binary RPC frameworks.
+
+- **Delimiters**: Use special characters like newlines or null bytes to separate messages. HTTP does this with `\r\n` for headers. Simple but requires escaping if your data contains the delimiter.
+
+- **Fixed size**: Every message is exactly N bytes. Simple and efficient, but limiting. Works for fixed-format protocols like some financial trading systems.
+
+We're going with length prefixing. It handles arbitrary binary data, it's simple to implement, and it's what you'll find in production systems. Four bytes at the start of each message saying "the next N bytes are a complete message."
+
+## The transport layer
+
+Sockets are lower level than we want to deal with directly. So we introduce an abstraction: transports. A transport handles the nitty-gritty of reading and writing, buffering, error handling, and all that. Our code just says "send this message" or "give me the next message."
+
+Here's the interface:
+
+```cpp
+class ITransport {
+public:
+    // Lifecycle
+    virtual void attach(EventWatcher& ew, Fn<IOEvent&&> replay) = 0;
+    virtual void bind() = 0;      // Server-side
+    virtual void connect() = 0;   // Client-side
+    virtual void close() = 0;
+
+    // I/O
+    virtual size_t resumeRead(Buffer& out_data, Peer& out_peer,
+                             IOStatus& out_status, size_t offset,
+                             size_t max_len) noexcept = 0;
+    virtual void suspendRead() = 0;
+
+    virtual size_t resumeWrite(Buffer&& data, const Peer& peer,
+                              IOStatus& out_status) noexcept = 0;
+    virtual void suspendWrite(const Peer& peer) = 0;
+};
+```
+
+The "resume/suspend" pattern is interesting. Instead of "read" and "write" directly, you *resume* reading or writing. The transport does its work, then suspends itself until the next event. This fits nicely with the event loop model - the transport doesn't block, it just does what it can and yields control.
+
+## Layering transports
+
+Here's where it gets fun: transports can wrap other transports. You might have:
+
+- **TcpTransport**: Talks directly to TCP sockets, handles raw byte reads/writes
+- **FramedTransport**: Wraps TcpTransport, adds length-prefix framing
+- (Future): **TlsTransport**: Wraps TcpTransport, adds encryption
+- (Future): **CompressionTransport**: Wraps anything, adds compression
+
+Each layer handles one concern. The higher layers don't know or care about the details below them. It's the decorator pattern, basically.
+
+## The reality of partial I/O
+
+Here's something that bit me hard when I first did this: network I/O is *always* partial.
+
+When you call `write(fd, buffer, 1000)`, you might think "okay, I'm sending 1000 bytes." But the syscall might return 300. Not because there's an error - just because the TCP send buffer only had room for 300 bytes right then. The rest needs to wait.
+
+Same deal with reads. You call `read(fd, buffer, 1000)` expecting 1000 bytes, but you get 10. Why? That's all that had arrived so far. More bytes are in flight, but they're not here yet. Or maybe they are here, but split across multiple TCP segments that haven't been reassembled yet.
+
+This is fundamental to how TCP works. You can't assume atomicity. Every read and write might be partial.
+
+So your transport layer needs to handle:
+
+- **Partial writes**: "I wanted to send 1000 bytes but only 300 went through." Buffer the rest, resume later.
+- **Partial reads**: "I got 10 bytes but the frame header is 4 bytes and the message is 500 bytes." Buffer what you got, wait for more.
+- **EAGAIN/EWOULDBLOCK**: The socket isn't ready. That's fine, suspend and wait for the event loop to notify you.
+
+This is why the resume/suspend model exists. The transport might need multiple iterations to complete an operation.
+
+## Buffering strategy
+
+Each peer (connection) needs its own buffers:
+
+```cpp
+struct RecvState {
+    Buffer buffer_;
+    size_t head_ = 0;  // Where we've read up to
+    size_t tail_ = 0;  // How much data we have
+};
+
+struct SendState {
+    Buffer frame_;     // The frame we're currently sending
+    size_t offset_ = 0; // How much we've sent so far
+};
+
+std::unordered_map<Peer, RecvState> recv_by_peer_;
+std::unordered_map<Peer, SendState> send_by_peer_;
+```
+
+When a read completes but we don't have a full frame yet, we keep the partial data in `RecvState`. When we try to write but can't send everything, we keep the rest in `SendState`. The event loop will call us back when the socket is ready again.
+
+## 🧠 Task
+
+In [`tasks/socket/`](https://github.com/getrafty-org/getrafty/tree/main/tasks/socket) you'll find:
+
+- `tcp_transport.cpp` - Handles raw TCP socket I/O
+- `framed_transport.cpp` - Adds length-prefix framing on top of TCP
+
+Your job is to implement the missing pieces in `framed_transport.cpp`:
+
+```cpp
+// ==== YOUR CODE: @62e6 ====
+  // 
+// ==== END YOUR CODE ====
+```
+
+Specifically:
+- Implement frame encoding/decoding with 4-byte length prefix
+- Handle partial reads (accumulate bytes until you have a complete frame)
+- Handle partial writes (buffer unsent bytes, resume when socket is ready)
+- Manage per-peer state for buffering
+
+The TCP layer is already done. You're just adding the framing logic on top.
+
+## 📦 Build & Test
+
+Tests in [`socket_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket_test.cpp) cover:
+- Single message send/receive
+- Multiple concurrent connections
+- Large messages (trigger partial I/O)
+- Rapid fire small messages
+- Error cases
+
+```shell
+~/workspace$ tasklet test socket
+```
+
+There's also a benchmark that measures ping-pong latency:
+
+```shell
+~/workspace$ tasklet bench socket
+```
+
+On my machine, localhost ping-pong is around 15-30μs for small messages. Not bad considering we're going through the kernel, framing overhead, and the event loop.
+
+## What's next?
+
+With reliable message transport in place, we can build higher-level protocols. Next up: RPC. Taking a function call and shipping it across the network, getting a response back. All the fun of distributed systems - timeouts, retries, backpressure, you name it.

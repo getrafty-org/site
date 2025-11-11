@@ -1,18 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-
-interface Post {
-  slug: string
-  metadata: {
-    title: string
-    publishedAt: string
-    summary: string
-  }
-}
+import type { BlogPost } from 'app/blog/post-helpers'
 
 interface SearchResultsProps {
-  posts: Post[]
+  posts: BlogPost[]
   selectedIndex: number
   onSelectIndex: (index: number) => void
   onClose: () => void

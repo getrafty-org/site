@@ -1,20 +1,12 @@
 'use client'
 
 import { SearchResults } from './search-results'
-
-interface Post {
-  slug: string
-  metadata: {
-    title: string
-    publishedAt: string
-    summary: string
-  }
-}
+import type { BlogPost } from 'app/blog/post-helpers'
 
 interface SearchOverlayProps {
   isOpen: boolean
   query: string
-  filteredPosts: Post[]
+  filteredPosts: BlogPost[]
   selectedIndex: number
   onSelectIndex: (index: number) => void
   onClose: () => void

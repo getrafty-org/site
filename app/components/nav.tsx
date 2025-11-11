@@ -1,41 +1,39 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useSearch } from './hooks/use-search'
 import { SearchOverlay } from './search-overlay'
 import { gitUrl } from 'app/config'
+import { useIsMounted } from './hooks/use-is-mounted'
+import type { BlogPost } from 'app/blog/post-helpers'
 
-import IconMagic from '@/icomoon/magic.svg'
+import IconMagic from '@/icomoon/magic-wand.svg'
 import IconSearch from '@/icomoon/search.svg'
-import IconGit from '@/icomoon/github.svg'
-
-
-interface Post {
-  slug: string
-  metadata: {
-    title: string
-    publishedAt: string
-    summary: string
-  }
-}
+import IconGit from '@/icomoon/github1.svg'
 
 interface NavbarProps {
-  posts?: Post[]
+  posts?: BlogPost[]
 }
 
 const hoverOpenDelayMs = 200
 
 export function Navbar({ posts = [] }: NavbarProps) {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const isMounted = useIsMounted()
   const hoverOpenTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const search = useSearch({ posts })
+  const desktopInputRef = useMemo(
+    () => search.createInputBinder(),
+    [search.createInputBinder],
+  )
+  const mobileInputRef = useMemo(
+    () => search.createInputBinder(),
+    [search.createInputBinder],
+  )
 
   useEffect(() => {
-    setMounted(true)
-
     return () => {
       if (hoverOpenTimeoutRef.current) {
         clearTimeout(hoverOpenTimeoutRef.current)
@@ -47,7 +45,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
-  if (!mounted) {
+  if (!isMounted) {
     return (
       <nav className="navbar">
         <ul className="navbar-links">
@@ -101,6 +99,12 @@ export function Navbar({ posts = [] }: NavbarProps) {
     search.open()
   }
 
+  const sharedInputProps = {
+    placeholder: 'Search...',
+    autoComplete: 'off',
+    ...search.inputBindings,
+  }
+
   return (
     <nav className="navbar">
       <ul className="navbar-links">
@@ -145,12 +149,9 @@ export function Navbar({ posts = [] }: NavbarProps) {
         <input
           type="search"
           className={`nav-search-inline ${search.isOpen ? 'visible' : ''}`}
-          placeholder="Search..."
-          value={search.query}
-          onChange={(e) => search.setQuery(e.target.value)}
-          onKeyDown={search.handleKeyDown}
+          {...sharedInputProps}
           onFocus={handleFocus}
-          autoComplete="off"
+          ref={desktopInputRef}
         />
       </div>
 
@@ -159,12 +160,9 @@ export function Navbar({ posts = [] }: NavbarProps) {
           <input
             type="search"
             className="mobile-search-input"
-            placeholder="Search..."
-            value={search.query}
-            onChange={(e) => search.setQuery(e.target.value)}
-            onKeyDown={search.handleKeyDown}
+            {...sharedInputProps}
             autoFocus
-            autoComplete="off"
+            ref={mobileInputRef}
           />
         </div>
       )}

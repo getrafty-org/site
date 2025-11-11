@@ -1,18 +1,14 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useIsMounted } from './hooks/use-is-mounted'
 
 export function Logo() {
   const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const isMounted = useIsMounted()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const logoSrc = mounted && theme === 'dark'
+  const logoSrc = isMounted && theme === 'dark'
     ? '/static/img/mascot-dark.svg'
     : '/static/img/mascot-light.svg'
 
