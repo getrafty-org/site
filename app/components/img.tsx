@@ -8,6 +8,7 @@ interface ImgProps {
   alt?: string;
   caption?: ReactNode;
   className?: string;
+  imgClassName?: string;
   width?: number;
   height?: number;
 }
@@ -32,6 +33,7 @@ export default function Img({
   alt = '',
   caption,
   className = '',
+  imgClassName = '',
   width,
   height
 }: ImgProps) {
@@ -97,7 +99,7 @@ export default function Img({
     <figure className={className || 'my-8'}>
       <canvas
         ref={canvasRef}
-        className="rounded-lg w-full"
+        className={`rounded-lg ${imgClassName || 'w-full'}`}
         style={canvasStyle}
       />
       {caption && (

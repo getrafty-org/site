@@ -5,54 +5,51 @@ summary: "About Getrafty"
 next: "tutorial"
 ---
 
-When people talk about infrastructure of large internet services, the term distributed systems shows up pretty fast. 
-It's basically the umbrella term for "backend stuff that has to keep working even when parts of it are broken." 
-People sometimes make it sound like black magic - servers that somehow recover when nodes crash, databases that don't corrupt everything when a network switch glitches, 
-clusters that autoscale and scaledown.
-<Img
-    src="/static/img/scenes-from-distributed-systems.webp"
-    alt="scenes from distributed systems"
-    caption={
-        <a href="https://x.com/b0rk/status/1056560207562711041">
-            The scenes from distributed systems by Julia E. @ X (Twitter)
-        </a>
-    }
-/>
+When people talk about infrastructure of large internet services, the term distributed systems comes up pretty fast. 
+It's basically the umbrella term for "the backend stuff that have to keep running even when something inevitably breaks".
+When I first herd about about distributed systems it all sounded like a black magic. 
+You know, all of those complex [protocols](https://en.wikipedia.org/wiki/Leader_election) after node crashes, 
+[data formats](https://stackoverflow.com/questions/3830206/can-a-tcp-checksum-fail-to-detect-an-error-if-yes-how-is-this-dealt-with) that don't corrupt everything when a network switch glitches, 
+or time that sometimes goes [backwards](https://en.wikipedia.org/wiki/Leap_second#Problems).
 
 The funny part is that the core ideas behind this aren't new or mysterious. 
-All of this stuff were forming in the 1970s, mostly in academic and research environments. 
-Cool tech, but not something most people ever had to think about.
-Things like logical clocks, consensus, and fault tolerance were being worked out long before anyone had "web scale" problems. 
-[Baby Internet](https://en.wikipedia.org/wiki/ARPANET) was already a distributed system, just tiny. So yeah, distributed computing has basically existed as long as computing has been a thing.
+Most of the key ideas were developed in the 1970s, mostly in academic and research labs. 
+Cool tech, but not something most people ever had to think about. 
+One example is ARPANET (baby internet) was already a distributed system, just tiny. 
+So yeah, distributed computing has basically existed as long as computing has been a thing.
 
-What web brought though is that around 2000s the consumer internet services came up and suddenly needed to handle millions of users. 
-At that point, scaling out across many machines stopped being a research topic and became the way to build real-world systems. 
-Companies that hit scale early had to turn decades of ideas into running code and infrastructure. 
-Foundational in ways that shaped the "modern stack". 
-
-So if you ship something today, the core machinery for building fast, scalable systems is already there, most of the time you don't need to reinvent anything.
-But there's still a difference between using the machinery and having a feel for it. You don't have to be a mechanic to drive fast, but a bit of [mechanical sympathy](https://mechanical-sympathy.blogspot.com/2011/07/why-mechanical-sympathy.html) helps 🏎️.
-
-Getrafty is a community and a blog with a single goal - make those big, intimidating distributed systems feel small and approachable again. 
-Step by step, no black boxes, no hand-waving, just code you can run, break, and understand.
+<Img 
+    src="/static/img/arpanet_logical_map_march_1977.png" 
+    alt="ARPANET map from 1973" 
+     caption={<a href="https://en.wikipedia.org/wiki/ARPANET#/media/File:Arpanet_logical_map,_march_1977.png">ARPANET, 1977</a>}
+/>
 
 
 Catch: [Why do we need distributed systems anyway?](https://brooker.co.za/blog/2020/01/02/why-distributed.html) 🤔 
 
+What web brought though is that around 2000s the consumer internet services came up and suddenly needed to handle millions of users. 
+At that point, scaling out across many machines stopped being a research topic and became the way to build real-world systems. 
+Companies that hit scale early had to turn decades of ideas into running code and infrastructure.
+Over time, many of those ideas have been packaged into open source software and cloud service abstractions.
+
+That's great for making us ship fast, but at time same time, I feel lost in those abstractions and marketing terms. 
+
+## What is Getrafty?
+
+Getrafty is just a regular engineer's journey to demystify distributed systems by building one from scratch, layer by layer. 
+
+[Open source](https://github.com/getrafty-org/getrafty/blob/main/LICENSE), exploratory, and fun.
+
+If that is something you feel into, welcome aboard.
 
 ## What's Inside?
 
-We're going to build a distributed file system layer by layer, starting with the absolute basic such as operating system primitives all the way down to consensus algorithms.
+We're going to build a tiny distributed file system - BarkFS. Layer by layer, starting with the absolute basic such as operating system primitives all the way down to consensus algorithms 🍿.
 
-Get ready 🍿
-
-## License
-
-The source code is released under the [MIT License](https://github.com/getrafty-org/getrafty/blob/main/LICENSE).
 
 ## Contributing
 
-If you want to contribute, *you are absolutely welcome*! 
-[Get in touch](https://github.com/orgs/getrafty-org/discussions) ❤️.
+The project is open to anyone. You are free to just walk through exercises 
+or you can join [getrafty project](https://github.com/getrafty-org/getrafty) and contribute tasks, docs, or suggest new ideas ❤️.
 
 

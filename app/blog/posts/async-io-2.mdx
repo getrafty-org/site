@@ -7,78 +7,104 @@ next: "thread-pool"
 ---
 
 Alright, so we've got an event loop that can schedule I/O operations. 
-That sounds too far from our original goal of being able to "talk" to a remote machine doesn't it? 
-Bear with me. I promise this will makes sense once we outline another corner pice of BarkFS's networking stack.
+That still feels far from our original goal of "talking" to a remote machine, doesn't it?
+Bear with me. it will make sense once we lay down the next corner piece of BarkFS's networking stack.
 
 
 ## Talking Machines
 
-In Unix world, talking to a remote machine means doing read or write operation. There're many ways how we can do that but
-the fundamental job of OS is to provide abstractions over hardware devices for us programmers to efficiently use them. 
-For network devices this abstraction is [sockets](https://en.wikipedia.org/wiki/Berkeley_sockets). Hello from 80s. 
+In UNIX world, talking to a remote machine typically means doing read or write operation on a thing called [socket](https://en.wikipedia.org/wiki/Berkeley_sockets).
 A socket is basically the OS handing you a handle and saying: "use this to send bytes out". 
-Every major operating system has this concept.
+This is a mature concept from 80s which almost every operating system had for decades.
 
-We will build BarkFS's networking stack on top of non-blocking sockets and here is where reactor we built earlier comes into play.
+We will build BarkFS's networking stack on top of non-blocking sockets and reactor thingy we built earlier.
 
 ## Message Passing
 
-What we're building here is the foundation of a distributed system. 
-Think about what Raft nodes need to do - they send messages to each other constantly. 
-Vote requests, log replication, heartbeats. 
-Each message needs to arrive intact, in order, without corruption.
+For BarkFS to work, its remote parts need a reliable way to talk to each other. 
+They can do it by [passing messages](https://en.wikipedia.org/wiki/Message_passing) to each other. 
+When a BarkFS node receives a message, it reacts by changing its state and possibly issuing a message to the next [actor](https://en.wikipedia.org/wiki/Actor_model). 
 
-You could use an existing RPC framework - [gRPC](https://grpc.io/), [Thrift](https://thrift.apache.org/), [Cap'n Proto](https://capnproto.org/). 
-They all solve this problem. But we here for learning, so it's fun to build from first principles.
-
-A communication library typically has these pieces:
-
-1. Transport layer: Handles raw socket I/O, connection management, error handling
-2. Framing layer: Turns byte streams into messages with boundaries
-3. Codec layer: Serialization/deserialization of your data structures
-4. RPC layer: Request/response matching, timeouts, error propagation
-
-In this article we're focused on pieces 1 and 2. 
-Getting bytes onto the wire reliably, and recovering structured messages on the other end.
-
-## Framing
-
-The gap between "stream of bytes" and "stream of messages" is called framing. 
-Every network protocol needs it. Things like length prefixed encoding, 
-new line delimiters or fixed size message encoding are all used to solve it.. 
-
-We're going with length prefixing. 
-It handles arbitrary binary data, it's simple to implement, and it's what you'll find in production systems. 
-Four bytes at the start of each message saying "the next N bytes are a complete message."
-
-## Transport
-
-Sockets are lower level than we want to deal with directly. So we introduce an abstraction: transports. A transport handles the nitty-gritty of reading and writing, buffering, error handling, and all that. Our code just says "send this message" or "give me the next message."
-
-Here's the interface:
+We will model this concept in the [`socket`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket.hpp) abstraction.
 
 ```cpp
-class ITransport {
-public:
-    // Lifecycle
-    virtual void attach(EventWatcher& ew, Fn<IOEvent&&> replay) = 0;
-    virtual void bind() = 0;      // Server-side
-    virtual void connect() = 0;   // Client-side
-    virtual void close() = 0;
+class Socket {
+ public:
+  void close(Fn<> callback);                                  // closes socket
+  void bind(Fn<IOStatus, Address> callback);                  // signals it is ready to receive 
+  void connect(Fn<IOStatus> callback);                        // opens a link with remote peer
+  void read(Fn<IOStatus, Buffer&&, Peer> callback);           // read chunk of data from remote
+  void write(Buffer data, Peer peer, Fn<IOStatus> callback);  // write chunk of data to remote
+}
+```
 
-    // I/O
-    virtual size_t resumeRead(Buffer& out_data, Peer& out_peer,
-                             IOStatus& out_status, size_t offset,
-                             size_t max_len) noexcept = 0;
-    virtual void suspendRead() = 0;
+As you can see `socket` is not a pure stateless "message passing" thing. 
+It operates in either connected (client) or bound mode (server) and implies [unicast](https://en.wikipedia.org/wiki/Unicast) topology. 
+I believe, this keeps the mental model simple.
 
-    virtual size_t resumeWrite(Buffer&& data, const Peer& peer,
-                              IOStatus& out_status) noexcept = 0;
-    virtual void suspendWrite(const Peer& peer) = 0;
+Internally, the socket is a deterministic state machine wrapping low-level protocols (TCP, UDP, etc.).
+It has handful amount of [`states`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket.hpp)
+with a step function [`tick`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket.hpp#L81).
+This function runs either by socket itself (e.g. for housekeeping) or by transport.
+
+Transport is a thing that actually touches the wire.
+
+```cpp
+struct ITransport {
+  virtual ~ITransport() = default;
+
+  // Lifecycle
+  virtual void attach(io::EventWatcher& ew, Fn<IOEvent&&> replay) = 0;
+  virtual void bind()                                             = 0;
+  virtual void connect()                                          = 0;
+  virtual void close()                                            = 0;
+
+  // I/O
+  virtual size_t resumeRead(Buffer& out_data, Peer& out_peer,
+                            IOStatus& out_status, size_t offset = 0,
+                            size_t max_len = 0) noexcept = 0;
+  virtual void suspendRead()                             = 0;
+
+  virtual size_t resumeWrite(Buffer&& data, const Peer& peer,
+                             IOStatus& out_status) noexcept = 0;
+  virtual void suspendWrite(const Peer& peer)               = 0;
 };
 ```
 
-The "resume/suspend" pattern is interesting. Instead of "read" and "write" directly, you *resume* reading or writing. The transport does its work, then suspends itself until the next event. This fits nicely with the event loop model - the transport doesn't block, it just does what it can and yields control.
+Socket calls transport internally to read or write data to the wire. 
+If transport is ready, `resumeRead` or `resumeWrite` completes immediately, if not 
+it notifies socket via `replay` and socket can "resume" operation.
+
+Transport interface may look relatively generic and doesn't prescribe any message format. This approach allows protocol designers to
+stack transport implementations and extend functionality with framing support, compression, etc.
+
+In BarkFS the lowest level transport is [`TcpTransport`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/tcp_transport.hpp#L10)
+stacked beneath [`FramedTransport`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/framed_transport.hpp#L10).
+
+
+## Framing
+
+What is framing?
+
+BarkFS would need to exchange some sort of messages between servers. 
+And different types of sockets provide different semantics for the units of data they exchange. 
+For example, TCP is modeled as ordered [stream](https://www.ietf.org/rfc/rfc793.txt) of bytes while [UDP](https://www.ietf.org/rfc/rfc768.txt) transfer data in datagrams.
+
+For BarkFS we would like to have a network stack that doesn't depend on a specific low-level protocol (wire). 
+
+But working with raw bytes at the application level is painful. And that's where FramedTransport comes handy. 
+It decorates lower level transport abstraction to look at individual chunks of bytes as independent messages.
+
+I'm aware of two mainstream approaches for framing: delimiter based and length prefix based.
+
+HTTP/1.0, for example, [uses](https://www.rfc-editor.org/rfc/rfc1945.html#section-4) split based framing.
+Binary protocols like Thrift [use](https://github.com/facebook/fbthrift/blob/main/thrift/lib/cpp/transport/TBufferTransports.h#L326) 
+length prefixes so each message tells you exactly how many bytes belong to it.
+
+Delimiter based approach works nicely with text-like data and many developers love it because it is super easy to debug. 
+But it doesn't work well for arbitrary binary data (what if payload contains the delimiter byte sequence?). 
+
+For BarkFS we can use either of those approaches.
 
 ## 🧠 Task
 
@@ -87,28 +113,28 @@ In [`tasks/socket/`](https://github.com/getrafty-org/getrafty/tree/main/tasks/so
 - `tcp_transport.cpp` - Handles raw TCP socket I/O
 - `framed_transport.cpp` - Adds length-prefix framing on top of TCP
 
-The goal for today is to implement the missing pieces in `framed_transport.cpp` like:
+The challenge for today is to implement the missing logic in `framed_transport.cpp`. Fragments that look like:
 
 ```cpp
 void FramedTransport::attach(io::EventWatcher& ew, Fn<IOEvent&&> replay) {
-  // ==== YOUR CODE: @148d ====
-
+  // ==== YOUR CODE: @FB101 ====
+  
   // ==== END YOUR CODE ====
 }
 ```
 
 Specifically:
 
-- Implement frame encoding/decoding with 4-byte length prefix
-- Handle partial reads (accumulate bytes until you have a complete frame)
-- Handle partial writes (buffer unsent bytes, resume when socket is ready)
-- Manage per peer buffers
+1. Implement frame encoding & decoding using a framing algorithm of your choice
+2. Handle partial reads by accumulate bytes until you have a complete frame
+3. Handle partial writes by maintaining pointer for buffer unsent bytes
+4. Manage per remote peer buffers
 
 The TCP layer is already done. You're just adding the framing logic on top.
 
 ## 📦 Build & Test
 
-Tests in [`socket_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket_test.cpp).
+Tests are in [`socket_test.cpp`](https://github.com/getrafty-org/getrafty/blob/main/tasks/socket/socket_test.cpp).
 
 ```shell
 ~/$ ./tasklet test socket
@@ -121,7 +147,7 @@ There's also a benchmark that measures ping-pong latency:
 ```
 
 To give you a rough baseline, on my machine with my own rough implementation 
-I was able to achieve around 19 μs mean latency / 105k RPS for 64 byte messages and 1ms / 29k RPS for 264Kb messages.
+I was able to achieve around 19μs mean latency @ 105k RPS for 0.064Kb messages and 1ms @ 29k RPS for 264Kb messages.
 
 ```shell
 ~/$ lscpu
@@ -136,4 +162,6 @@ CPU(s):                      8
 
 ## What's Next?
 
-With reliable message transport in place, we can build higher-level protocols. Next up: RPC. Taking a function call and shipping it across the network, getting a response back. All the fun of distributed systems - timeouts, retries, backpressure, you name it.
+With reliable message transport in place, we can build higher-level protocols. 
+Next up: RPC. Taking a function call and shipping it across the network, getting a response back. 
+All the fun of distributed systems - timeouts, retries, backpressure, you name it.
