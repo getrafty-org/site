@@ -1,0 +1,37 @@
+# Woodpecker CI pipeline for getrafty-org/site
+#
+# Required secrets (set in ci.hackamonth.io → repo settings → Secrets):
+#   GHCR_TOKEN  — GitHub PAT with packages:write for ghcr.io/getrafty-org
+#   GITOPS_PAT  — GitHub PAT with repo scope for sidosera/hackamonth-gitops
+
+when:
+  branch: main
+  event: push
+
+steps:
+  - name: build-push
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      repo: ghcr.io/getrafty-org/site
+      tags:
+        - latest
+        - sha-${CI_COMMIT_SHA}
+      registry: ghcr.io
+      username: getrafty-org
+      password:
+        from_secret: GHCR_TOKEN
+
+  - name: update-gitops
+    image: alpine/git
+    environment:
+      GITOPS_PAT:
+        from_secret: GITOPS_PAT
+    commands:
+      - git config --global user.email "woodpecker@hackamonth.io"
+      - git config --global user.name "Woodpecker CI"
+      - git clone https://x-access-token:$GITOPS_PAT@github.com/sidosera/hackamonth-gitops.git /tmp/gitops
+      - cd /tmp/gitops
+      - sed -i "s|image: ghcr.io/getrafty-org/site:.*|image: ghcr.io/getrafty-org/site:sha-$CI_COMMIT_SHA|" compose.yaml
+      - git add compose.yaml
+      - git diff --staged --quiet || git commit -m "ci: getrafty sha-$CI_COMMIT_SHA"
+      - git push
