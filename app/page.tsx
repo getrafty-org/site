@@ -43,7 +43,6 @@ export default function Page() {
           can run, break, and understand.
         </p>
         <p className="mb-6">
-          Ready?{' '}
           <Link href="/blog/about" style={{ color: 'var(--color-link)' }}>
             Start here
           </Link>

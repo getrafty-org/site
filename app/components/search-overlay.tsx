@@ -24,8 +24,6 @@ export function SearchOverlay({
 
   return (
     <>
-      <div className="navbar-center-bg" />
-
       {query && (
         <div className="nav-results-container">
           <SearchResults
@@ -37,16 +35,7 @@ export function SearchOverlay({
         </div>
       )}
 
-      <div
-        className="nav-blur-overlay"
-        style={{
-          '--gradient-start':
-            query && filteredPosts.length > 0
-              ? `calc(2rem + 2.5em + 1rem + ${Math.min(filteredPosts.length, 5)} * 2.5rem)`
-              : 'calc(2rem + 2.5em + 1rem)',
-        } as React.CSSProperties}
-        onClick={onClose}
-      />
+      <div className="nav-dismiss-overlay" onClick={onClose} />
     </>
   )
 }

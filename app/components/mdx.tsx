@@ -7,6 +7,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-bash'
 import Img from './img'
 import { getImageSize } from '../lib/image-size'
+import { slugify } from '../lib/slugify'
 
 if (typeof globalThis !== 'undefined' && !(globalThis as any).Prism) {
   ;(globalThis as any).Prism = Prism
@@ -91,17 +92,6 @@ function RoundedImage(props) {
 function ImgWithDimensions(props) {
   const dimensions = getImageSize(props.src)
   return <Img {...props} width={dimensions?.width} height={dimensions?.height}/>
-}
-
-function slugify(str) {
-  return str
-    .toString()
-    .toLowerCase()
-    .trim() // Remove whitespace from both ends of a string
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word characters except for -
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
 }
 
 function createHeading(level) {

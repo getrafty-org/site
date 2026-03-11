@@ -4,6 +4,8 @@ import { CustomMDX } from 'app/components/mdx'
 import Link from 'next/link'
 import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { Footer } from 'app/components/footer'
+import { TableOfContents } from 'app/components/toc'
+import { extractHeadings } from 'app/lib/extract-headings'
 
 export const dynamicParams = false
 
@@ -83,6 +85,8 @@ export default async function Blog(props: {
   }
 
 
+  const headings = post.content ? extractHeadings(post.content) : []
+
   return (
     <section>
       <script
@@ -123,33 +127,22 @@ export default async function Blog(props: {
           {formatDate(post.metadata.publishedAt)}
         </p>
       </div>
+      <TableOfContents entries={headings} />
       <article className="prose" style={{ color: 'var(--color-text)' }}>
         <CustomMDX source={post.content} />
       </article>
-      <nav
-        className="mt-12"
-        style={{ borderTop: '1px solid var(--color-line)', paddingTop: '1.5rem' }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-          <Link
-            href={backLink.href}
-            className="flex items-center gap-2 leading-snug"
-            style={{ color: 'var(--color-link)' }}
-          >
-            <span aria-hidden>←</span>
-            <span>{backLink.label}</span>
+      <nav className="post-nav">
+        <Link href={backLink.href} className="post-nav-link">
+          <span className="post-nav-label">Previous</span>
+          <span className="post-nav-title">{backLink.label}</span>
+        </Link>
+
+        {nextLink && (
+          <Link href={nextLink.href} className="post-nav-link post-nav-link--next">
+            <span className="post-nav-label">Next</span>
+            <span className="post-nav-title">{nextLink.label}</span>
           </Link>
-
-          {nextLink && <Link
-            href={nextLink.href}
-            className="flex items-center gap-2 leading-snug ml-auto text-right justify-end"
-            style={{ color: 'var(--color-link)' }}
-          >
-            <span>{nextLink.label}</span>
-            <span aria-hidden>→</span>
-          </Link>}
-
-        </div>
+        )}
       </nav>
       <Footer />
     </section>
