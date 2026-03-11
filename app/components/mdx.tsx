@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import React from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { MDXComponents } from 'mdx/types'
 import rehypePrism from '@mapbox/rehype-prism'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-bash'
@@ -9,8 +11,10 @@ import Img from './img'
 import { getImageSize } from '../lib/image-size'
 import { slugify } from '../lib/slugify'
 
-if (typeof globalThis !== 'undefined' && !(globalThis as any).Prism) {
-  ;(globalThis as any).Prism = Prism
+const prismGlobal = globalThis as typeof globalThis & { Prism?: typeof Prism }
+
+if (typeof globalThis !== 'undefined' && !prismGlobal.Prism) {
+  prismGlobal.Prism = Prism
 }
 
 const extraShellCommands = [
@@ -45,7 +49,16 @@ if (!Prism.languages.bash['course-command']) {
   })
 }
 
-function Table({ data }) {
+interface TableData {
+  headers: ReactNode[]
+  rows: ReactNode[][]
+}
+
+interface TableProps {
+  data: TableData
+}
+
+function Table({ data }: TableProps) {
   let headers = data.headers.map((header, index) => (
     <th key={index}>{header}</th>
   ))
@@ -67,8 +80,12 @@ function Table({ data }) {
   )
 }
 
-function CustomLink(props) {
-  let href = props.href
+type CustomLinkProps = ComponentPropsWithoutRef<'a'>
+
+function CustomLink({ href = '', ...props }: CustomLinkProps) {
+  if (!href) {
+    return <a {...props} />
+  }
 
   if (href.startsWith('/')) {
     return (
@@ -79,24 +96,55 @@ function CustomLink(props) {
   }
 
   if (href.startsWith('#')) {
-    return <a {...props} />
+    return <a href={href} {...props} />
   }
 
-  return <a target="_blank" rel="noopener noreferrer" {...props} />
+  return <a href={href} target="_blank" rel="noopener noreferrer" {...props} />
 }
 
-function RoundedImage(props) {
-  return <Image alt={props.alt} className="rounded-lg" {...props} />
+type RoundedImageProps = ComponentProps<typeof Image>
+
+function RoundedImage({ className, ...props }: RoundedImageProps) {
+  const imageClassName = className ? `rounded-lg ${className}` : 'rounded-lg'
+  return <Image className={imageClassName} {...props} />
 }
 
-function ImgWithDimensions(props) {
+type ImgWithDimensionsProps = ComponentProps<typeof Img>
+
+function ImgWithDimensions(props: ImgWithDimensionsProps) {
   const dimensions = getImageSize(props.src)
-  return <Img {...props} width={dimensions?.width} height={dimensions?.height}/>
+  return (
+    <Img
+      {...props}
+      width={props.width ?? dimensions?.width}
+      height={props.height ?? dimensions?.height}
+    />
+  )
 }
 
-function createHeading(level) {
-  const Heading = ({ children }) => {
-    let slug = slugify(children)
+function extractTextContent(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node)
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(extractTextContent).join('')
+  }
+
+  if (React.isValidElement<{ children?: ReactNode }>(node)) {
+    return extractTextContent(node.props.children)
+  }
+
+  return ''
+}
+
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
+
+function createHeading(level: HeadingLevel) {
+  const Heading = ({ children }: { children: ReactNode }) => {
+    const text = extractTextContent(children)
+    const slug = slugify(text)
+
     return React.createElement(
       `h${level}`,
       { id: slug },
@@ -105,9 +153,10 @@ function createHeading(level) {
           href: `#${slug}`,
           key: `link-${slug}`,
           className: 'anchor',
+          'aria-label': text ? `Link to section ${text}` : 'Link to section',
         }),
+        children,
       ],
-      children
     )
   }
 
@@ -116,7 +165,7 @@ function createHeading(level) {
   return Heading
 }
 
-let components = {
+const components: MDXComponents = {
   h1: createHeading(1),
   h2: createHeading(2),
   h3: createHeading(3),
@@ -127,6 +176,11 @@ let components = {
   Img: ImgWithDimensions,
   a: CustomLink,
   Table,
+}
+
+interface RehypeNode {
+  properties?: Record<string, unknown>
+  children?: RehypeNode[]
 }
 
 function withCodeLanguageAliases() {
@@ -145,19 +199,23 @@ function withCodeLanguageAliases() {
     }
   }
 
-  return (tree: any) => {
-    const visit = (node: any) => {
+  return (tree: RehypeNode) => {
+    const visit = (node: RehypeNode | undefined) => {
       if (!node || typeof node !== 'object') {
         return
       }
 
       if (node.properties) {
-        if (Array.isArray(node.properties.className)) {
-          node.properties.className = node.properties.className.map(aliasClass)
+        const classNames = node.properties.className
+        if (Array.isArray(classNames)) {
+          node.properties.className = classNames.map((item) =>
+            typeof item === 'string' ? aliasClass(item) : item,
+          )
         }
 
-        if (typeof node.properties['data-language'] === 'string') {
-          node.properties['data-language'] = aliasClass(node.properties['data-language'])
+        const dataLanguage = node.properties['data-language']
+        if (typeof dataLanguage === 'string') {
+          node.properties['data-language'] = aliasClass(dataLanguage)
         }
       }
 
@@ -170,7 +228,9 @@ function withCodeLanguageAliases() {
   }
 }
 
-export function CustomMDX(props) {
+type CustomMDXProps = ComponentProps<typeof MDXRemote>
+
+export function CustomMDX(props: CustomMDXProps) {
   return (
     <MDXRemote
       {...props}

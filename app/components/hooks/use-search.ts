@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { filterPostsByQuery, type BlogPost } from 'app/blog/post-helpers'
+import { useRouter } from 'next/navigation'
 
 interface UseSearchOptions {
   posts: BlogPost[]
@@ -8,6 +9,7 @@ interface UseSearchOptions {
 }
 
 export function useSearch({ posts, onToggle }: UseSearchOptions) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -21,6 +23,12 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
   const blurInputs = useCallback(() => {
     inputRefs.current.forEach((input) => input.blur())
   }, [])
+
+  const focusInputsSoon = useCallback(() => {
+    window.setTimeout(() => {
+      focusInputs()
+    }, 0)
+  }, [focusInputs])
 
   const createInputBinder = useCallback(() => {
     let current: HTMLInputElement | null = null
@@ -45,17 +53,6 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
     setSelectedIndex(0)
   }, [query, filteredPosts.length])
 
-  // Prevent body scroll when search is active
-  useEffect(() => {
-    if (query && isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [query, isOpen])
 
   // Global keyboard handlers
   useEffect(() => {
@@ -78,6 +75,20 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
         return
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsOpen(true)
+        focusInputsSoon()
+        return
+      }
+
+      if (e.key === '/') {
+        e.preventDefault()
+        setIsOpen(true)
+        focusInputsSoon()
+        return
+      }
+
       // Ignore modifier keys, function keys, etc.
       if (
         e.ctrlKey ||
@@ -88,14 +99,20 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
         return
       }
 
-      // Show search and focus input on any key press
+      if (e.key.trim() === '') {
+        return
+      }
+
+      // Show search, preserve the first typed character, and focus the input.
+      e.preventDefault()
       setIsOpen(true)
-      focusInputs()
+      setQuery((current) => current + e.key)
+      focusInputsSoon()
     }
 
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [blurInputs, focusInputs])
+  }, [blurInputs, focusInputsSoon])
 
   // Notify when search opens/closes
   useEffect(() => {
@@ -104,10 +121,7 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
 
   const open = () => {
     setIsOpen(true)
-    // Focus search input after a short delay
-    setTimeout(() => {
-      focusInputs()
-    }, 100)
+    focusInputsSoon()
   }
 
   const close = () => {
@@ -115,6 +129,12 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
     setQuery('')
     blurInputs()
     setSelectedIndex(0)
+  }
+
+  const clear = () => {
+    setQuery('')
+    setSelectedIndex(0)
+    focusInputsSoon()
   }
 
   const handleQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +150,8 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
       setSelectedIndex((prev) => (prev - 1 + filteredPosts.length) % filteredPosts.length)
     } else if (e.key === 'Enter' && filteredPosts[selectedIndex]) {
       e.preventDefault()
-      window.location.href = `/blog/${filteredPosts[selectedIndex].slug}`
+      router.push(`/blog/${filteredPosts[selectedIndex].slug}`)
+      close()
     }
   }
 
@@ -142,6 +163,7 @@ export function useSearch({ posts, onToggle }: UseSearchOptions) {
     setSelectedIndex,
     open,
     close,
+    clear,
     inputBindings: {
       value: query,
       onChange: handleQueryChange,

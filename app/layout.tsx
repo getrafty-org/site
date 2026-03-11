@@ -3,6 +3,8 @@ import './prism-theme.css'
 import type { Metadata } from 'next'
 import { Navbar } from './components/nav'
 import { ThemeProvider } from './components/theme-provider'
+import { CodeCopyButton } from './components/code-copy'
+import { EmojiStyle } from './components/emoji-style'
 import { baseUrl } from './config'
 import { getBlogPosts } from './blog/utils'
 
@@ -63,12 +65,17 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
+          <a href="#main-content" className="skip-link">
+            Skip to content
+          </a>
           <header>
             <Navbar posts={posts} />
           </header>
-          <main>
+          <main id="main-content">
             {children}
           </main>
+          <CodeCopyButton />
+          <EmojiStyle />
         </ThemeProvider>
       </body>
     </html>

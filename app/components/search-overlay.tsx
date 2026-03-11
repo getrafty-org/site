@@ -35,7 +35,19 @@ export function SearchOverlay({
         </div>
       )}
 
-      <div className="nav-dismiss-overlay" onClick={onClose} />
+      <div
+        className="nav-dismiss-overlay"
+        role="button"
+        tabIndex={0}
+        aria-label="Close search results"
+        onClick={onClose}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onClose()
+          }
+        }}
+      />
     </>
   )
 }

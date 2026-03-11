@@ -6,6 +6,7 @@ import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { Footer } from 'app/components/footer'
 import { TableOfContents } from 'app/components/toc'
 import { extractHeadings } from 'app/lib/extract-headings'
+import { getReadingTime, formatReadingTime } from 'app/lib/reading-time'
 
 export const dynamicParams = false
 
@@ -61,31 +62,9 @@ export default async function Blog(props: {
     notFound()
   }
 
-  const previousPost = post.metadata.prev
-    ? posts.find((item) => item.slug === post.metadata.prev)
-    : undefined
-  const nextPost = post.metadata.next
-    ? posts.find((item) => item.slug === post.metadata.next)
-    : undefined
-
-  const backLink = previousPost
-    ? {
-      href: `/blog/${previousPost.slug}`,
-      label: previousPost.metadata.title,
-    }
-    : {
-      href: '/',
-      label: 'Home',
-    }
-
-  const nextLink = nextPost &&
-  {
-    href: `/blog/${nextPost.slug}`,
-    label: nextPost.metadata.title,
-  }
-
-
-  const headings = post.content ? extractHeadings(post.content) : []
+  const content = post.content ?? ''
+  const headings = content ? extractHeadings(content) : []
+  const readingTime = getReadingTime(content)
 
   return (
     <section>
@@ -119,32 +98,26 @@ export default async function Blog(props: {
           }),
         }}
       />
-      <h1 className="title text-4xl font-semibold tracking-tight mb-2" style={{ color: 'var(--color-base)' }}>
+      <nav className="article-breadcrumb" aria-label="Breadcrumb">
+        <Link href="/blog">Articles</Link>
+        <span aria-hidden="true">/</span>
+        <span>{post.metadata.title}</span>
+      </nav>
+      <h1 className="title text-4xl font-semibold tracking-tight mb-2 fg-base">
         {post.metadata.title}
       </h1>
-      <div className="flex justify-between items-center mt-2 mb-8 text-sm" style={{ color: 'var(--color-dim)' }}>
-        <p>
+      <div className="article-meta">
+        <time dateTime={new Date(post.metadata.publishedAt).toISOString()}>
           {formatDate(post.metadata.publishedAt)}
-        </p>
+        </time>
+        <span className="article-meta-sep" aria-hidden="true">·</span>
+        <span>{formatReadingTime(readingTime)}</span>
       </div>
       <TableOfContents entries={headings} />
-      <article className="prose" style={{ color: 'var(--color-text)' }}>
-        <CustomMDX source={post.content} />
+      <article className="prose fg-body">
+        <CustomMDX source={content} />
       </article>
-      <nav className="post-nav">
-        <Link href={backLink.href} className="post-nav-link">
-          <span className="post-nav-label">Previous</span>
-          <span className="post-nav-title">{backLink.label}</span>
-        </Link>
-
-        {nextLink && (
-          <Link href={nextLink.href} className="post-nav-link post-nav-link--next">
-            <span className="post-nav-label">Next</span>
-            <span className="post-nav-title">{nextLink.label}</span>
-          </Link>
-        )}
-      </nav>
-      <Footer />
+      {post.slug === 'motto' && <Footer />}
     </section>
   )
 }

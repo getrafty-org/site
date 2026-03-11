@@ -38,16 +38,14 @@ export function Search({ posts }: SearchProps) {
           {filteredPosts.map((post) => (
             <li key={post.slug} className="grid grid-cols-[minmax(10ch,auto)_minmax(0,1fr)_auto] items-baseline gap-5 mb-3.5">
               <time
-                className="whitespace-nowrap"
-                style={{ color: 'var(--color-dim)', fontSize: '0.9rem' }}
+                className="whitespace-nowrap fg-dim text-sm"
                 dateTime={new Date(post.metadata.publishedAt).toISOString()}
               >
                 {formatPublishedDate(post.metadata.publishedAt, false)}
               </time>
               <Link
                 href={`/blog/${post.slug}`}
-                className="no-underline hover:underline"
-                style={{ color: 'var(--color-link)', fontSize: '0.9rem' }}
+                className="no-underline hover:underline fg-link text-sm"
               >
                 {post.metadata.title}
               </Link>
@@ -56,7 +54,7 @@ export function Search({ posts }: SearchProps) {
           ))}
         </ul>
       ) : (
-        <p style={{ color: 'var(--color-dim)' }}>No matches found.</p>
+        <p className="fg-dim">No matches found.</p>
       )}
     </section>
   )

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { BlogPost } from 'app/blog/post-helpers'
+import { MAX_SEARCH_RESULTS } from './search-constants'
 
 interface SearchResultsProps {
   posts: BlogPost[]
@@ -17,7 +18,7 @@ export function SearchResults({ posts, selectedIndex, onSelectIndex, onClose }: 
 
   return (
     <ul className="nav-search-results">
-      {posts.slice(0, 5).map((post, index) => (
+      {posts.slice(0, MAX_SEARCH_RESULTS).map((post, index) => (
         <li key={post.slug}>
           <Link
             href={`/blog/${post.slug}`}

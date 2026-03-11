@@ -48,6 +48,7 @@ export function TableOfContents({ entries }: TocProps) {
             <a
               href={`#${entry.slug}`}
               className={`toc-link ${entry.level > 2 ? 'toc-indent' : ''} ${activeSlug === entry.slug ? 'toc-active' : ''}`}
+              aria-current={activeSlug === entry.slug ? 'location' : undefined}
             >
               {entry.text}
             </a>

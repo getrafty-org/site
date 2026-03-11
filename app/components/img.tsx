@@ -27,7 +27,6 @@ const applyInverseFilter = (ctx: CanvasRenderingContext2D): void => {
   ctx.putImageData(buf, 0, 0);
 };
 
-
 export default function Img({
   src,
   alt = '',
@@ -43,7 +42,7 @@ export default function Img({
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Clien
+  // Client-only theme handling keeps the image rendering deterministic during SSR.
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -92,7 +91,7 @@ export default function Img({
 
   const canvasStyle: CSSProperties = {
     aspectRatio: width && height ? `${width} / ${height}` : undefined,
-    background: !isLoaded ? 'var(--color-bg-secondary)' : undefined,
+    background: !isLoaded ? 'var(--color-highlight)' : undefined,
   };
 
   return (
@@ -101,11 +100,13 @@ export default function Img({
         ref={canvasRef}
         className={`rounded-lg ${imgClassName || 'w-full'}`}
         style={canvasStyle}
+        role={alt ? 'img' : undefined}
+        aria-label={alt || undefined}
+        aria-hidden={alt ? undefined : true}
       />
       {caption && (
         <figcaption
-          className="text-sm text-center mt-2"
-          style={{ color: 'var(--color-dim)' }}
+          className="text-sm text-center mt-2 fg-dim"
         >
           {caption}
         </figcaption>

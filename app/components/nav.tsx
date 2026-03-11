@@ -8,6 +8,7 @@ import { SearchOverlay } from './search-overlay'
 import { useIsMounted } from './hooks/use-is-mounted'
 import type { BlogPost } from 'app/blog/post-helpers'
 import Link from 'next/link'
+import { MAX_SEARCH_RESULTS } from './search-constants'
 
 import IconArticles from '@/icomoon/cube.svg'
 import IconContrast from '@/icomoon/contrast.svg'
@@ -72,13 +73,25 @@ export function Navbar({ posts = [] }: NavbarProps) {
   const isMounted = useIsMounted()
   const pathname = usePathname()
   const hoverOpenTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null)
+  const mobilePanelRef = useRef<HTMLDivElement | null>(null)
+  const mobilePanelId = 'mobile-navigation-panel'
 
   const search = useSearch({ posts })
   const desktopInputRef = useMemo(() => search.createInputBinder(), [search.createInputBinder])
   const mobileInputRef = useMemo(() => search.createInputBinder(), [search.createInputBinder])
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolledDown, setScrolledDown] = useState(false)
   const tocHeadings = useTocFromDom(mobileMenuOpen)
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolledDown(window.scrollY > 60)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const editUrl = getEditUrl(pathname)
 
@@ -98,11 +111,46 @@ export function Navbar({ posts = [] }: NavbarProps) {
 
   useEffect(() => {
     if (!mobileMenuOpen) return
+    const panel = mobilePanelRef.current
+    if (!panel) return
+
+    const getFocusable = () =>
+      Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMobileMenu()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeMobileMenu()
+        mobileMenuButtonRef.current?.focus()
+        return
+      }
+
+      if (e.key !== 'Tab') return
+
+      const focusable = getFocusable()
+      if (!focusable.length) {
+        e.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
+
+    panel.addEventListener('keydown', handleKey)
+    return () => panel.removeEventListener('keydown', handleKey)
   }, [mobileMenuOpen, closeMobileMenu])
 
   useEffect(() => {
@@ -118,8 +166,12 @@ export function Navbar({ posts = [] }: NavbarProps) {
       <nav className="navbar">
         <ul className="navbar-links">
           <li><Link href="/blog" className="button" aria-label="Articles"><IconArticles className="icon" /></Link></li>
-          <li><button className="button" aria-label="Toggle theme"><IconContrast className="icon" /></button></li>
-          <li><span className="button" aria-disabled="true" style={{ opacity: 0.33, pointerEvents: 'none' }}><IconEdit className="icon" /></span></li>
+          <li><button type="button" className="button" aria-label="Toggle theme"><IconContrast className="icon" /></button></li>
+          <li>
+            <button type="button" className="button" aria-label="Edit unavailable on this page" disabled>
+              <IconEdit className="icon" />
+            </button>
+          </li>
         </ul>
       </nav>
     )
@@ -153,6 +205,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
   const sharedInputProps = {
     placeholder: 'Search...',
     autoComplete: 'off',
+    'aria-label': 'Search articles',
     ...search.inputBindings,
   }
 
@@ -161,7 +214,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
       <ul className="navbar-links">
         <li><Link href="/blog" className="button" aria-label="Articles"><IconArticles className="icon" /></Link></li>
         <li>
-          <button className="button" onClick={toggleTheme} aria-label="Toggle theme">
+          <button type="button" className="button" onClick={toggleTheme} aria-label="Toggle theme">
             <IconContrast className="icon" />
           </button>
         </li>
@@ -171,9 +224,9 @@ export function Navbar({ posts = [] }: NavbarProps) {
               <IconEdit className="icon" />
             </a>
           ) : (
-            <span className="button" aria-disabled="true" style={{ opacity: 0.33, pointerEvents: 'none' }}>
+            <button type="button" className="button" aria-label="Edit unavailable on this page" disabled>
               <IconEdit className="icon" />
-            </span>
+            </button>
           )}
         </li>
       </ul>
@@ -181,9 +234,13 @@ export function Navbar({ posts = [] }: NavbarProps) {
       <ul className="navbar-links-right">
         <li>
           <button
+            ref={mobileMenuButtonRef}
+            type="button"
             className="button mobile-menu-toggle"
             onClick={() => mobileMenuOpen ? closeMobileMenu() : setMobileMenuOpen(true)}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls={mobilePanelId}
           >
             {mobileMenuOpen ? <IconClose className="icon" /> : <IconMenu className="icon" />}
           </button>
@@ -191,7 +248,7 @@ export function Navbar({ posts = [] }: NavbarProps) {
       </ul>
 
       <div
-        className="navbar-center desktop-search"
+        className={`navbar-center desktop-search ${scrolledDown && !search.isOpen ? 'navbar-hidden' : ''}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -207,12 +264,16 @@ export function Navbar({ posts = [] }: NavbarProps) {
             onFocus={handleFocus}
             ref={desktopInputRef}
           />
-          {search.query && <ClearButton onClick={() => { search.close() }} />}
+          {search.query ? (
+            <ClearButton onClick={search.clear} />
+          ) : (
+            <kbd className="search-shortcut" aria-hidden="true">⌘K</kbd>
+          )}
         </div>
       </div>
 
       <SearchOverlay
-        isOpen={search.isOpen}
+        isOpen={search.isOpen && !mobileMenuOpen}
         query={search.query}
         filteredPosts={search.filteredPosts}
         selectedIndex={search.selectedIndex}
@@ -221,8 +282,14 @@ export function Navbar({ posts = [] }: NavbarProps) {
       />
 
       {mobileMenuOpen && (
-        <>
-          <div className="mobile-panel">
+          <div
+            id={mobilePanelId}
+            ref={mobilePanelRef}
+            className="mobile-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+          >
             <div className="mobile-panel-search">
               <div className="mobile-search-field">
                 <IconSearch className="search-icon" />
@@ -233,21 +300,22 @@ export function Navbar({ posts = [] }: NavbarProps) {
                   autoFocus
                   ref={mobileInputRef}
                 />
-                {search.query && <ClearButton onClick={() => { search.close() }} />}
+                {search.query && <ClearButton onClick={search.clear} />}
               </div>
             </div>
 
             {search.query && search.filteredPosts.length > 0 ? (
               <ul className="mobile-panel-results">
-                {search.filteredPosts.slice(0, 8).map((post, index) => (
+                {search.filteredPosts.slice(0, MAX_SEARCH_RESULTS).map((post, index) => (
                   <li key={post.slug}>
-                    <a
+                    <Link
                       href={`/blog/${post.slug}`}
                       className={index === search.selectedIndex ? 'selected' : ''}
                       onClick={closeMobileMenu}
+                      onMouseEnter={() => search.setSelectedIndex(index)}
                     >
                       {post.metadata.title}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -281,8 +349,6 @@ export function Navbar({ posts = [] }: NavbarProps) {
               </>
             )}
           </div>
-          <div className="mobile-panel-backdrop" onClick={closeMobileMenu} />
-        </>
       )}
     </nav>
   )
