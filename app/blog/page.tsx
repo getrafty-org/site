@@ -4,7 +4,7 @@ import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { sortPostsByDateDesc } from 'app/blog/post-helpers'
 
 export const metadata: Metadata = {
-  title: 'Articles',
+  title: 'Pages',
   description: 'Write-ups on distributed backend systems. Build fully functional tiny versions yourself.',
 }
 
@@ -14,7 +14,7 @@ export default function BlogIndex() {
   return (
     <section>
       <h1 className="text-3xl font-semibold tracking-tight mb-8 fg-base">
-        Articles
+        Pages
       </h1>
       <ul className="article-list">
         {posts.map((post) => (

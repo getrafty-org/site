@@ -99,7 +99,7 @@ export default async function Blog(props: {
         }}
       />
       <nav className="article-breadcrumb" aria-label="Breadcrumb">
-        <Link href="/blog">Articles</Link>
+        <Link href="/blog">~</Link>
         <span aria-hidden="true">/</span>
         <span>{post.metadata.title}</span>
       </nav>
@@ -117,7 +117,7 @@ export default async function Blog(props: {
       <article className="prose fg-body">
         <CustomMDX source={content} />
       </article>
-      {post.slug === 'motto' && <Footer />}
+      <Footer />
     </section>
   )
 }
